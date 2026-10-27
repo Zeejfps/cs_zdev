@@ -68,6 +68,16 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task Connect_WithoutAnMcpServer_OpensTheSessionWithNone()
+    {
+        var start = await AcpAgentConnection.ConnectAsync(_agent.ClientReads, _agent.ClientWrites, AcpHarness.ClaudeCode, "C:/repo", null, _prompt,
+            CancellationToken.None).WaitAsync(Deadline);
+
+        await using var connection = Assert.IsType<AcpStart.Started>(start).Connection;
+        Assert.Empty(_agent.Params("session/new")!["mcpServers"]!.AsArray());
+    }
+
+    [Fact]
     public async Task Connect_ToAnAgentWithoutTheChatMode_FailsAndSaysWhich()
     {
         var harness = AcpHarness.ClaudeCode with { ChatMode = "yolo" };
