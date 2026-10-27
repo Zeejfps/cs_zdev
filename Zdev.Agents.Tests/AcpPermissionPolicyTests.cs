@@ -58,6 +58,18 @@ public sealed class AcpPermissionPolicyTests
     }
 
     [Fact]
+    public void WithoutAnOwnServer_AnMcpTool_IsLeftToTheUser()
+    {
+        var request = AcpPermissionPolicy.Parse(JsonNode.Parse("""
+            {"sessionId":"s","toolCall":{"toolCallId":"t1","name":"mcp__diffdino__pairing_wait","title":"mcp__diffdino__pairing_wait","kind":"other",
+             "_meta":{"claudeCode":{"toolName":"mcp__diffdino__pairing_wait","mcpServer":{"name":"diffdino","source":"dynamic"}}}},"options":
+            """ + ClaudeOptions + "}"), NoneAnnounced);
+        Assert.NotNull(request);
+
+        Assert.IsType<AcpPermissionDecision.AskUser>(AcpPermissionPolicy.Decide(request, null));
+    }
+
+    [Fact]
     public void ClaudeOtherMcpTool_IsLeftToTheUser()
     {
         var decision = Decide("""

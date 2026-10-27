@@ -79,12 +79,13 @@ public enum AcpPermissionVerdict
 /// </summary>
 public static partial class AcpPermissionPolicy
 {
-    public static AcpPermissionDecision Decide(AcpPermissionRequest request, string ownServer)
+    /// <param name="ownServer">The app's MCP server, whose tools are allowed; null when the session has none.</param>
+    public static AcpPermissionDecision Decide(AcpPermissionRequest request, string? ownServer)
     {
         // Once, every time, rather than always: Claude Code writes an "always" into the repository's
         // own .claude/settings.local.json, which is the user's file, not the session's.
         if (request.McpServer is null && request.IsMcpApproval) return new AcpPermissionDecision.AskUser();
-        if (request.McpServer is { } server && string.Equals(server, ownServer, StringComparison.OrdinalIgnoreCase))
+        if (request.McpServer is { } server && ownServer is not null && string.Equals(server, ownServer, StringComparison.OrdinalIgnoreCase))
             return AllowOnce(request);
 
         // Codex files another server's MCP tool calls as execute: only a shell command is the agent's own.

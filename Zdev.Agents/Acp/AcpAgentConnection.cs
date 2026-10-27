@@ -13,7 +13,8 @@ public interface IAcpPermissionPrompt
     Task<string?> AskAsync(AcpPermissionRequest request, CancellationToken ct);
 }
 
-/// <summary>The app's MCP server as a session is handed it.</summary>
+/// <summary>The app's MCP server as a session is handed it. A session opened without one gets no MCP
+/// server from the app, and no MCP tool passes the write guard as the app's own.</summary>
 public sealed record AcpMcpServer(string Name, Uri Url);
 
 /// <summary>How starting an agent went.</summary>
@@ -42,17 +43,22 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
 
     private readonly AcpJsonRpc _rpc;
     private readonly Process? _process;
+
+    /// <summary>The processes the agent runs as, all ended with it; none for a connection over the
+    /// caller's streams.</summary>
+    private readonly AgentProcessTree? _tree;
     private readonly IAcpPermissionPrompt _prompt;
-    private readonly string _ownServer;
+    private readonly string? _ownServer;
     private readonly Dictionary<string, string> _announcedServers = new();
     private readonly Queue<string> _stderr = new();
     private string? _sessionId;
     private IReadOnlySet<string> _modes = new HashSet<string>();
     private int _disposed;
 
-    private AcpAgentConnection(TextReader incoming, TextWriter outgoing, Process? process, IAcpPermissionPrompt prompt, string ownServer)
+    private AcpAgentConnection(TextReader incoming, TextWriter outgoing, Process? process, IAcpPermissionPrompt prompt, string? ownServer)
     {
         _process = process;
+        _tree = process is null ? null : AgentProcessTree.Adopt(process);
         _prompt = prompt;
         _ownServer = ownServer;
         _rpc = new AcpJsonRpc(incoming, outgoing, this);
@@ -86,7 +92,7 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     public static async Task<AcpStart> StartAsync(
         AcpHarness harness,
         string workingDirectory,
-        AcpMcpServer server,
+        AcpMcpServer? server,
         IAcpPermissionPrompt prompt,
         IServerEnvironment environment,
         CancellationToken ct)
@@ -120,26 +126,14 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
             return new AcpStart.Failed($"'{harness.Command}' could not be started: {e.Message}");
         }
 
-        var connection = new AcpAgentConnection(process.StandardOutput, process.StandardInput, process, prompt, server.Name);
+        var connection = new AcpAgentConnection(process.StandardOutput, process.StandardInput, process, prompt, server?.Name);
         process.ErrorDataReceived += (_, e) =>
         {
             if (e.Data is { } line) connection.NoteStderr(line);
         };
         process.BeginErrorReadLine();
 
-        string? failure;
-        try
-        {
-            failure = await connection.OpenAsync(workingDirectory, server, harness.AskingMode, harness.SessionMetaJson, ct).ConfigureAwait(false);
-            if (failure is null && harness.ChatMode is { } chatMode && !connection.Offers(chatMode))
-                failure = $"The agent offers no '{chatMode}' mode.";
-        }
-        catch
-        {
-            await connection.DisposeAsync().ConfigureAwait(false);
-            throw;
-        }
-
+        var failure = await connection.OpenForHarnessAsync(harness, workingDirectory, server, ct).ConfigureAwait(false);
         if (failure is null) return new AcpStart.Started(connection);
 
         await connection.DisposeAsync().ConfigureAwait(false);
@@ -147,14 +141,56 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         return new AcpStart.Failed(tail.Length == 0 ? failure : $"{failure}\n{tail}");
     }
 
+    /// <summary>
+    /// Opens a session with an agent the caller runs at the far end of <paramref name="incoming"/>
+    /// and <paramref name="outgoing"/>, as <see cref="StartAsync"/> does with the process it starts:
+    /// the same handshake, modes and write guard. For an agent on another transport, or one a test
+    /// plays in process. The connection owns no process, and disposing it stops reading but leaves
+    /// the streams to the caller.
+    /// </summary>
+    public static async Task<AcpStart> ConnectAsync(
+        TextReader incoming,
+        TextWriter outgoing,
+        AcpHarness harness,
+        string workingDirectory,
+        AcpMcpServer? server,
+        IAcpPermissionPrompt prompt,
+        CancellationToken ct)
+    {
+        var connection = Over(incoming, outgoing, prompt, server?.Name);
+        var failure = await connection.OpenForHarnessAsync(harness, workingDirectory, server, ct).ConfigureAwait(false);
+        if (failure is null) return new AcpStart.Started(connection);
+
+        await connection.DisposeAsync().ConfigureAwait(false);
+        return new AcpStart.Failed(failure);
+    }
+
+    /// <summary>Opens the session in <paramref name="harness"/>'s asking mode and checks it offers the
+    /// chat mode too. Answers why it could not, or null; disposes the connection when it throws.</summary>
+    private async Task<string?> OpenForHarnessAsync(AcpHarness harness, string workingDirectory, AcpMcpServer? server, CancellationToken ct)
+    {
+        try
+        {
+            var failure = await OpenAsync(workingDirectory, server, harness.AskingMode, harness.SessionMetaJson, ct).ConfigureAwait(false);
+            if (failure is null && harness.ChatMode is { } chatMode && !Offers(chatMode))
+                failure = $"The agent offers no '{chatMode}' mode.";
+            return failure;
+        }
+        catch
+        {
+            await DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
     /// <summary>A connection over given streams, for tests: no process to own.</summary>
-    internal static AcpAgentConnection Over(TextReader incoming, TextWriter outgoing, IAcpPermissionPrompt prompt, string ownServer) =>
+    internal static AcpAgentConnection Over(TextReader incoming, TextWriter outgoing, IAcpPermissionPrompt prompt, string? ownServer) =>
         new(incoming, outgoing, null, prompt, ownServer);
 
     /// <summary>Handshakes, opens the session, and puts it in <paramref name="askingMode"/>.
     /// Answers why it could not, or null.</summary>
     internal async Task<string?> OpenAsync(
-        string workingDirectory, AcpMcpServer server, string askingMode, string? sessionMetaJson, CancellationToken ct)
+        string workingDirectory, AcpMcpServer? server, string askingMode, string? sessionMetaJson, CancellationToken ct)
     {
         _rpc.Start();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -178,13 +214,7 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
             {
                 ["_meta"] = sessionMetaJson is null ? null : JsonNode.Parse(sessionMetaJson),
                 ["cwd"] = workingDirectory,
-                ["mcpServers"] = new JsonArray(new JsonObject
-                {
-                    ["type"] = "http",
-                    ["name"] = server.Name,
-                    ["url"] = server.Url.ToString(),
-                    ["headers"] = new JsonArray(),
-                }),
+                ["mcpServers"] = McpServersJson(server),
             }, timeout.Token).ConfigureAwait(false);
 
             if (session?["sessionId"] is not JsonValue id || !id.TryGetValue<string>(out var sessionId))
@@ -213,6 +243,18 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         {
             return "The agent did not answer in time.";
         }
+    }
+
+    private static JsonArray McpServersJson(AcpMcpServer? server)
+    {
+        if (server is null) return new JsonArray();
+        return new JsonArray(new JsonObject
+        {
+            ["type"] = "http",
+            ["name"] = server.Name,
+            ["url"] = server.Url.ToString(),
+            ["headers"] = new JsonArray(),
+        });
     }
 
     private static HashSet<string> OfferedModes(JsonNode session)
@@ -364,21 +406,12 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 1) return;
-        if (_process is { } process)
-        {
-            try
-            {
-                if (!process.HasExited) process.Kill(entireProcessTree: true);
-            }
-            catch (InvalidOperationException)
-            {
-            }
-            catch (Win32Exception)
-            {
-            }
-        }
+        // Ended whether or not the first process has exited: a wrapper such as npx exits and leaves
+        // the adapter it started running.
+        _tree?.End();
 
         await _rpc.DisposeAsync().ConfigureAwait(false);
+        _tree?.Dispose();
         _process?.Dispose();
     }
 }
