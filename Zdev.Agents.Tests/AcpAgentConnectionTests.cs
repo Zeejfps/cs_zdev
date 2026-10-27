@@ -116,6 +116,31 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AnAgentThatAcceptsImages_GetsAPictureAsBase64()
+    {
+        _agent.Capabilities = """{"promptCapabilities":{"image":true}}""";
+        Assert.Null(await _connection.OpenAsync("C:/repo", Server, "default", null, CancellationToken.None).WaitAsync(Deadline));
+        Assert.True(_connection.AcceptsImages);
+
+        await _connection.PromptAsync(
+            [new AcpContent.Prose("Look"), new AcpContent.Image("image/png", [1, 2, 3])],
+            CancellationToken.None).WaitAsync(Deadline);
+
+        var image = _agent.Params("session/prompt")!["prompt"]!.AsArray()[1]!;
+        Assert.Equal("image", image["type"]!.GetValue<string>());
+        Assert.Equal("image/png", image["mimeType"]!.GetValue<string>());
+        Assert.Equal("AQID", image["data"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task AnAgentThatSaysNothingAboutImages_DoesNotAcceptThem()
+    {
+        Assert.Null(await _connection.OpenAsync("C:/repo", Server, "default", null, CancellationToken.None).WaitAsync(Deadline));
+
+        Assert.False(_connection.AcceptsImages);
+    }
+
+    [Fact]
     public async Task Open_WithoutTheAskingMode_Fails()
     {
         var failure = await _connection.OpenAsync("C:/repo", Server, "read-only", null, CancellationToken.None).WaitAsync(Deadline);

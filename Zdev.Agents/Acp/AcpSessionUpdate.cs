@@ -9,6 +9,10 @@ public abstract record AcpContent
 
     /// <summary>A file's text attached as context; <paramref name="Uri"/> may name lines in its fragment.</summary>
     public sealed record Resource(Uri Uri, string Text) : AcpContent;
+
+    /// <summary>A picture, its encoded bytes of the type <paramref name="MimeType"/> names, such as
+    /// <c>image/png</c>.</summary>
+    public sealed record Image(string MimeType, byte[] Data) : AcpContent;
 }
 
 /// <summary>What a <c>session/update</c> notification says, in the cases the app shows.</summary>
@@ -19,6 +23,10 @@ public abstract record AcpSessionUpdate
 
     /// <summary>A fragment of a message the user sent, as an agent replays it while it loads a session.</summary>
     public sealed record UserMessageChunk(string Text) : AcpSessionUpdate;
+
+    /// <summary>A picture in a message the user sent, as an agent replays it while it loads a session:
+    /// its encoded bytes of the type <paramref name="MimeType"/> names.</summary>
+    public sealed record UserImage(string MimeType, byte[] Data) : AcpSessionUpdate;
 
     /// <summary>A fragment of the agent's reasoning.</summary>
     public sealed record ThoughtChunk(string Text) : AcpSessionUpdate;
@@ -40,6 +48,7 @@ public abstract record AcpSessionUpdate
             case "agent_message_chunk":
                 return new MessageChunk(ContentText(body["content"]));
             case "user_message_chunk":
+                if (ContentImage(body["content"]) is { } image) return image;
                 return new UserMessageChunk(ContentText(body["content"]));
             case "agent_thought_chunk":
                 return new ThoughtChunk(ContentText(body["content"]));
@@ -74,6 +83,17 @@ public abstract record AcpSessionUpdate
 
     private static string ContentText(JsonNode? content) =>
         StringOf(content?["type"]) == "text" ? StringOf(content?["text"]) ?? string.Empty : string.Empty;
+
+    /// <summary>The picture <paramref name="content"/> holds, or null where it is no image block or its
+    /// data is no base64.</summary>
+    private static UserImage? ContentImage(JsonNode? content)
+    {
+        if (StringOf(content?["type"]) != "image") return null;
+        if (StringOf(content?["mimeType"]) is not { } mimeType || StringOf(content?["data"]) is not { } data) return null;
+        var bytes = new byte[data.Length * 3 / 4];
+        if (!Convert.TryFromBase64String(data, bytes, out var written)) return null;
+        return new UserImage(mimeType, bytes[..written]);
+    }
 
     private static string? StringOf(JsonNode? node) =>
         node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;

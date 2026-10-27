@@ -53,6 +53,9 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     /// only prose.</summary>
     public bool EmbedsContext { get; private set; }
 
+    /// <summary>Whether the agent takes pictures in a turn, as <see cref="AcpContent.Image"/>.</summary>
+    public bool AcceptsImages { get; private set; }
+
     /// <summary>Whether the agent said, as it started, that it can load a saved session, so a later
     /// <see cref="StartLoadingAsync"/> can open this one again.</summary>
     public bool CanLoadSession { get; private set; }
@@ -378,6 +381,8 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         var capabilities = initialized?["agentCapabilities"];
         EmbedsContext = capabilities?["promptCapabilities"]?["embeddedContext"] is JsonValue embeds
                         && embeds.TryGetValue<bool>(out var embedded) && embedded;
+        AcceptsImages = capabilities?["promptCapabilities"]?["image"] is JsonValue images
+                        && images.TryGetValue<bool>(out var accepted) && accepted;
         CanLoadSession = capabilities?["loadSession"] is JsonValue loads && loads.TryGetValue<bool>(out var loadable) && loadable;
     }
 
@@ -481,7 +486,8 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     public Task<AcpStopReason> PromptAsync(string text, CancellationToken ct) => PromptAsync([new AcpContent.Prose(text)], ct);
 
     /// <summary>Sends one user turn made of <paramref name="content"/> and completes when the agent
-    /// ends it. Attach a <see cref="AcpContent.Resource"/> only where <see cref="EmbedsContext"/>.</summary>
+    /// ends it. Attach a <see cref="AcpContent.Resource"/> only where <see cref="EmbedsContext"/>, and an
+    /// <see cref="AcpContent.Image"/> only where <see cref="AcceptsImages"/>.</summary>
     public async Task<AcpStopReason> PromptAsync(IReadOnlyList<AcpContent> content, CancellationToken ct)
     {
         var sessionId = _sessionId ?? throw new InvalidOperationException("The session is not open.");
@@ -516,6 +522,12 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
                 ["mimeType"] = "text/plain",
                 ["text"] = resource.Text,
             },
+        },
+        AcpContent.Image image => new JsonObject
+        {
+            ["type"] = "image",
+            ["mimeType"] = image.MimeType,
+            ["data"] = Convert.ToBase64String(image.Data),
         },
         _ => throw new ArgumentOutOfRangeException(nameof(content), content, "Unknown content."),
     };
