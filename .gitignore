@@ -5,10 +5,4 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 .idea/
-databricks_mcp.log
-.repodex/
-
-# Lua spike artefacts
-spikes/lua-aot/native/
-spikes/lua-aot/.lua-src/
 __pycache__/
