@@ -1,4 +1,4 @@
-namespace GitBench.Features.Repos;
+namespace Zdev.Git;
 
 // `<repo>/.git` is a directory in an ordinary repo and a *gitlink file* in a linked worktree or a
 // submodule: one line, `gitdir: <path>`, where the path may be relative to the working tree. Every

@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Platforms.Unix;
+namespace Zdev.Pty.Platforms.Unix;
 
 /// <summary>
 /// Holds what a pseudo-terminal has produced and nobody has asked for yet, handing it on in whatever

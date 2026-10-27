@@ -1,6 +1,6 @@
-using GitBench.Features.Commits;
+using Zdev.Git;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public interface IGitDiffReader
 {

@@ -1,10 +1,10 @@
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json.Nodes;
-using GitBench.Features.AgentConnections.Acp;
+using Zdev.Agents.Acp;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Agents.Tests;
 
 /// <summary>The ACP client against a scripted agent on in-process pipes: the handshake puts the
 /// session in the asking mode, a turn streams its updates, and the agent's permission requests are

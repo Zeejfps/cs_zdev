@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// The children these tests spawn, named for what the child is asked to do rather than for the shell

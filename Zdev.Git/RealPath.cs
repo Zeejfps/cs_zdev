@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// A path with every symlink along it followed, so that two spellings of one location compare equal.

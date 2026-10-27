@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// The golden format itself. Every corpus assertion is an equality on this text, so a format that

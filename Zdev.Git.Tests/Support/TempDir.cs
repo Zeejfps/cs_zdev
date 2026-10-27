@@ -1,6 +1,6 @@
-using GitBench.Infrastructure;
+using Zdev.Common;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 internal sealed class TempDir : IDisposable
 {

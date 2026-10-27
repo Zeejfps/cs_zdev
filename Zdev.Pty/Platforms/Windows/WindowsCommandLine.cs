@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Pty.Platforms.Windows;
+namespace Zdev.Pty.Platforms.Windows;
 
 /// <summary>
 /// Encodes an executable and its argv as the single command-line string CreateProcessW takes.

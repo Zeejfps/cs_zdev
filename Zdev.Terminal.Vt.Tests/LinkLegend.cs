@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Assigns one character to each distinct hyperlink in a frame, so the link plane of a snapshot

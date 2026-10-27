@@ -1,4 +1,4 @@
-namespace GitBench.Pty;
+namespace Zdev.Pty;
 
 /// <summary>
 /// The character dimensions of a pseudo-terminal.

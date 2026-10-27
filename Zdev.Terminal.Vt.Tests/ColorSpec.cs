@@ -1,6 +1,6 @@
-using static GitBench.Terminal.Vt.Tests.Vt;
+using static Zdev.Terminal.Vt.Tests.Vt;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// SGR colour, which is where the grid surface earns its keep. Truecolor is the single most-used

@@ -44,7 +44,7 @@
             is ambiguous with System.Text.Rune wherever the bare name is used. PrivateAssets would
             hide the type from consumers but also drop the assembly from their deps.json, and the
             engine then throws FileNotFoundException while building its first buffer. Consumers
-            alias the name instead - see the Using item in GitBench.Terminal.Vt.XtermSharp.csproj.
+            alias the name instead - see the Using item in Zdev.Terminal.Vt.csproj.
         -->
         <PackageReference Include="NStack.Core" Version="0.12.0" />
     </ItemGroup>

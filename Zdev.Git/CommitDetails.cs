@@ -1,6 +1,6 @@
-using GitBench.Features.Submodules;
+using Zdev.Git;
 
-namespace GitBench.Features.Commits;
+namespace Zdev.Git;
 
 public enum FileChangeStatus
 {

@@ -1,10 +1,9 @@
-using GitBench.Features.Repos;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 public sealed class GitProcessEnvironmentTests : IDisposable
 {

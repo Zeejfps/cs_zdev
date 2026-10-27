@@ -1,7 +1,6 @@
-using GitBench.Features.Commits;
-using GitBench.Git;
+using Zdev.Git;
 
-namespace GitBench.Features.LocalChanges;
+namespace Zdev.Git;
 
 public sealed record LocalChangesSnapshot(
     Guid RepoId,

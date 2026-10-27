@@ -1,4 +1,4 @@
-namespace GitBench.Infrastructure;
+namespace Zdev.Common;
 
 // A result hierarchy whose failure case can be constructed from a bare message — lets
 // generic infrastructure (RunBackground) fold thread-level errors into the type's own

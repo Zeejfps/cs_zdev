@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// A git process that crashed or was force-killed leaves its <c>*.lock</c> file behind, and every

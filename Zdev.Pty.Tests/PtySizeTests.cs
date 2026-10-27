@@ -1,6 +1,6 @@
-using GitBench.Pty;
+using Zdev.Pty;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 public class PtySizeTests
 {

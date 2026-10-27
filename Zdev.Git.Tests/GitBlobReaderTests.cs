@@ -1,12 +1,11 @@
 using System.Diagnostics;
 using System.Text;
-using GitBench.Features.Repos;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 /// <summary>
 /// The guarantee the batch reader rests on: it returns exactly what spawning <c>git show</c>

@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// The lowest file descriptor the process could open right now, which is where a leaked one shows up:

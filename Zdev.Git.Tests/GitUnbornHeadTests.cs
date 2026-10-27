@@ -1,9 +1,7 @@
-using GitBench.Features.LocalChanges;
-using GitBench.Features.Repos;
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // A freshly `git init`ed repo has an unborn HEAD: files can be staged, but nothing resolves
 // HEAD until the first commit lands. Working-tree operations must still work there, or the

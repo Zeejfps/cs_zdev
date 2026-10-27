@@ -1,4 +1,4 @@
-namespace GitBench.Infrastructure;
+namespace Zdev.Common;
 
 /// <summary>
 /// Recursive directory removal that survives what a real working tree holds on Windows: junctions

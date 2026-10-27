@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>How a terminal engine starts up.</summary>
 /// <remarks>

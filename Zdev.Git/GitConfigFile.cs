@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 // Reads `.git/config` instead of spawning `git config`. Local scope only, and include.path is not
 // followed — a key reached only through an include reads as unset.
@@ -14,7 +14,7 @@ public sealed class GitConfigFile
     private GitConfigFile(Dictionary<string, List<string>> values) => _values = values;
 
     public static GitConfigFile ForRepo(string repoPath)
-        => Read(Path.Combine(CommonGitDir(Features.Repos.RepoGitDir.Resolve(repoPath)), "config"));
+        => Read(Path.Combine(CommonGitDir(RepoGitDir.Resolve(repoPath)), "config"));
 
     public static GitConfigFile Read(string configPath)
     {

@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// What the platform gate has to be true of, now that turning it on for Unix unskips two dozen tests

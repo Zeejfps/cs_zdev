@@ -1,6 +1,6 @@
-using static GitBench.Terminal.Vt.Tests.Vt;
+using static Zdev.Terminal.Vt.Tests.Vt;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// The alternate screen. Every full-screen program in the corpora enters and leaves it exactly once

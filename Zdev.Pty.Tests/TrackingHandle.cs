@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>A <see cref="SafeHandle"/> that owns nothing and only records whether it was released.</summary>
 sealed class TrackingHandle : SafeHandle

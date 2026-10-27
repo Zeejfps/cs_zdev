@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Which console host a Windows session runs on. The session binds to the ConPTY shipped beside the

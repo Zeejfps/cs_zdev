@@ -1,7 +1,7 @@
-using GitBench.Pty.Platforms.Unix;
-using GitBench.Pty.Platforms.Windows;
+using Zdev.Pty.Platforms.Unix;
+using Zdev.Pty.Platforms.Windows;
 
-namespace GitBench.Pty;
+namespace Zdev.Pty;
 
 /// <summary>
 /// Starts pseudo-terminal sessions using the host operating system's facility for them.

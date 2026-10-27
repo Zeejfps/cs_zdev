@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// A fact that spawns a real pseudo-terminal, and so only runs where one is implemented.

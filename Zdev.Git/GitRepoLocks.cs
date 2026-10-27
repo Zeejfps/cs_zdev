@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// A shared resource a mutating git op serializes on. Two, because they are not the same resource

@@ -1,8 +1,7 @@
-using GitBench.Features.Repos;
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 public sealed class GitCheckIgnoreBatchTests : IDisposable
 {

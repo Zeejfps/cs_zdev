@@ -1,6 +1,6 @@
-using static GitBench.Terminal.Vt.Tests.Vt;
+using static Zdev.Terminal.Vt.Tests.Vt;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Scrolling and the scrollback window. Row 0 of the grid surface is the top of the live viewport

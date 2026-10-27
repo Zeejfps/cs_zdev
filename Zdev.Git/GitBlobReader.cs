@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// Reads blobs through one long-lived <c>git cat-file --batch</c> per repository instead of

@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public interface IGitRepositoryLifecycle
 {

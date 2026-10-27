@@ -39,7 +39,7 @@ changed reflow's idea of where a reverse-video line ends.
 | File | Change |
 | --- | --- |
 | `CharData.cs` | `Attribute` is `CellAttribute`, not `int`. `DefaultAttr` / `InvertedAttr` become `public static readonly CellAttribute` (they were `public const int`). Both constructors take a `CellAttribute`. |
-| `Terminal.cs` | `CurAttr` is `CellAttribute`. `EraseAttr ()` returns one, built as `DefaultAttr.WithBackground (CurAttr.Background)` — the same thing `(DefaultAttr & ~0x1ff) \| (CurAttr & 0x1ff)` used to say. **`MatchColor` is deleted**, not implemented: resolving RGB to a palette slot at parse time destroys exactly what `GitBench.Terminal.Vt.TerminalColor` exists to preserve, since a palette colour follows the user's theme and a literal RGB must not. |
+| `Terminal.cs` | `CurAttr` is `CellAttribute`. `EraseAttr ()` returns one, built as `DefaultAttr.WithBackground (CurAttr.Background)` — the same thing `(DefaultAttr & ~0x1ff) \| (CurAttr & 0x1ff)` used to say. **`MatchColor` is deleted**, not implemented: resolving RGB to a palette slot at parse time destroys exactly what `Zdev.Terminal.Vt.TerminalColor` exists to preserve, since a palette colour follows the user's theme and a literal RGB must not. |
 | `Buffer.cs` | `SavedAttr`, `GetBlankLine`, `SaveCursor`, `RestoreCursor` and `FillViewportRows` all move from `int` to `CellAttribute`. `SavedAttr` is split off its shared `int SavedX, SavedY` declaration. |
 | `BufferSet.cs` | `ActivateAltBuffer (CellAttribute? fillAttr)`. |
 | `CharacterAttribute.cs` | `ToSGR (CellAttribute)`. The two duplicated fg/bg blocks become one `ColorToSGR` helper that also emits `38;2;r;g;b` for an RGB colour and nothing for either default. The stale `// Temporary, longer term in Attribute we will add a proper encoding` comment is gone — this patch is that encoding. |
@@ -303,7 +303,7 @@ private `WithBlink` in `TerminalModeSetExtensions`.
 The six-valued `CursorStyle` is kept as the single stored value rather than split into a shape and a
 blink flag. It is exactly shape × blink, it is already the vendored public vocabulary that
 `InputHandler` speaks, and two fields would be two places for the same fact to be recorded
-differently. `GitBench.Terminal.Vt.TerminalCursor` splits it into its two axes in the adapter, where
+differently. `Zdev.Terminal.Vt.TerminalCursor` splits it into its two axes in the adapter, where
 the seam asks for that shape.
 
 ### Behaviour deliberately *not* changed

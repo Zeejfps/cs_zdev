@@ -1,4 +1,4 @@
-namespace GitBench.Pty;
+namespace Zdev.Pty;
 
 /// <summary>
 /// How a pseudo-terminal session ended.

@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Tests that spawn real children run one at a time: they read and write this process's environment

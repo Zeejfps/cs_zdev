@@ -1,10 +1,8 @@
-using GitBench.Features.Commits;
-using GitBench.Features.Repos;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // Load builds the history view's snapshot out of `git for-each-ref`, `git stash list` and a
 // `git log --date-order --stdin` walk seeded with every displayed ref. These drive the real

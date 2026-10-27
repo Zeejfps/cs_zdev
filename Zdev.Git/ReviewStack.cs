@@ -1,4 +1,4 @@
-namespace GitBench.Features.Review;
+namespace Zdev.Git;
 
 /// <summary>
 /// A pinned review session: the repo and head ref under review plus an optional explicit base.

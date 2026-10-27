@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// What a cell is allowed to hold. A terminal cell is a grapheme cluster occupying one or two

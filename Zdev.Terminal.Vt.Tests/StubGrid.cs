@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// The state a terminal is in before anything has been fed to it, for tests of the snapshot format

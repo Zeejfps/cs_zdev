@@ -1,4 +1,4 @@
-namespace GitBench.Features.Commits;
+namespace Zdev.Git;
 
 public readonly record struct LaneParent(int ParentIndex, int Lane);
 

@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Assigns one character to each distinct cell style in a frame, so the style plane of a snapshot

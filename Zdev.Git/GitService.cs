@@ -1,15 +1,7 @@
-using GitBench.Features.Branches;
-using GitBench.Features.Commits;
-using GitBench.Features.Diff;
-using GitBench.Features.LocalChanges;
-using GitBench.Features.Repos;
-using GitBench.Features.Review;
-using GitBench.Features.Submodules;
-using GitBench.Features.Worktrees;
-using GitBench.Infrastructure;
-using SubmoduleStatus = GitBench.Features.Submodules.SubmoduleStatus;
+using Zdev.Git;
+using Zdev.Common;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 // Non-injecting config reads the identity resolver needs. Separate from IGitService so the
 // resolver depends only on these (and so GitService can hand itself to GitIdentityService

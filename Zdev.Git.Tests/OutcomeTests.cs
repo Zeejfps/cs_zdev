@@ -1,7 +1,7 @@
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The outcome hierarchies are the contract between GitService and every view model: a
 // non-failure case must never surface a FailureMessage (generic infrastructure like

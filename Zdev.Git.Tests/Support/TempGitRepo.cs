@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 internal sealed record GitRun(int ExitCode, string Stdout, string Stderr);
 

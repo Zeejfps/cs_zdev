@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// The kind of background read a permit is taken for. Times are attributed per (repo, kind) so a

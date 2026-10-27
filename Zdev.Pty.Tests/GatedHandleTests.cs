@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// What the handle gate promises the platform sessions that share it: a handle is never released

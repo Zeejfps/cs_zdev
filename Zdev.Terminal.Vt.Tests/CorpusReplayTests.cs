@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Replays a whole recorded session and compares the screen against a committed golden.

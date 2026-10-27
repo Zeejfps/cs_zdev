@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace GitBench.Pty.Platforms.Unix;
+namespace Zdev.Pty.Platforms.Unix;
 
 [StructLayout(LayoutKind.Sequential)]
 internal struct WindowSize

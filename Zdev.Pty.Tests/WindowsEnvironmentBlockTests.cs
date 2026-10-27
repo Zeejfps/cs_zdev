@@ -1,6 +1,6 @@
-using GitBench.Pty.Platforms.Windows;
+using Zdev.Pty.Platforms.Windows;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Pins how an overlay layers over the inherited environment and how the result is encoded as the

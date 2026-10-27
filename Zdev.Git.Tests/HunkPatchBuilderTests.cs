@@ -1,7 +1,7 @@
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The "\ No newline at end of file" marker must survive a diff → patch round-trip. Dropping it
 // makes git apply add a trailing newline the user never touched, corrupting the working tree on

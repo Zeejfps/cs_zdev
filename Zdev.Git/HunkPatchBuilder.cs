@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public static class HunkPatchBuilder
 {

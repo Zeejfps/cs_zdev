@@ -1,6 +1,6 @@
 using System.Runtime.ExceptionServices;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Runs a call that is allowed to fail but never allowed to hang. Every blocking call a

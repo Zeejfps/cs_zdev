@@ -1,7 +1,7 @@
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // `git init` from the "New Repository" menu entry: the folder the picker returns has to come back
 // as something RepoRegistry will actually open, whether it exists yet or not.

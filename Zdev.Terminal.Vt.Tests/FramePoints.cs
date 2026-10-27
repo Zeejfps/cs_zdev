@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>Why a corpus is worth snapshotting at a particular byte offset.</summary>
 public enum FrameReason

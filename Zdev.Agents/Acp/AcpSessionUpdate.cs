@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace GitBench.Features.AgentConnections.Acp;
+namespace Zdev.Agents.Acp;
 
 /// <summary>One block of a user turn.</summary>
 public abstract record AcpContent

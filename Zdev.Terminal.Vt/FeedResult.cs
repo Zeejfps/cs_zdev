@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>
 /// A range of viewport rows, inclusive at both ends.

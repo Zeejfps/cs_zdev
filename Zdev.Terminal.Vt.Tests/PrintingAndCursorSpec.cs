@@ -1,6 +1,6 @@
-using static GitBench.Terminal.Vt.Tests.Vt;
+using static Zdev.Terminal.Vt.Tests.Vt;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Where runes land and where the cursor ends up. CR, LF, CUP and CUF are the four most-used

@@ -1,6 +1,6 @@
-using static GitBench.Terminal.Vt.Tests.Vt;
+using static Zdev.Terminal.Vt.Tests.Vt;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// The bytes the engine owes the program. These come back on the <see cref="FeedResult"/> that

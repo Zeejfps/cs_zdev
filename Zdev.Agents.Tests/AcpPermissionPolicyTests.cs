@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
-using GitBench.Features.AgentConnections.Acp;
+using Zdev.Agents.Acp;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Agents.Tests;
 
 /// <summary>The ACP write guard, over permission requests as the three adapters really send them
 /// (captured by the Step 1 spike): file writes put to the user, reads and shell allowed, the app's own MCP tools

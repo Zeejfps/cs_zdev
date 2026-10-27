@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// A ref passed to a git command as an argument.

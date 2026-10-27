@@ -1,7 +1,6 @@
-using GitBench.Features.Commits;
-using GitBench.Features.LocalChanges;
+using Zdev.Git;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public interface IGitStatusReader
 {

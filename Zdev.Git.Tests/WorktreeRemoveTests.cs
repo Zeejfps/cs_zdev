@@ -1,10 +1,9 @@
 using System.Diagnostics;
-using GitBench.Features.Repos;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // Removing a worktree against a real repo. The case that matters is the one git can't finish on
 // its own: a working tree containing a junction (pnpm's node_modules), where `git worktree remove`

@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Platforms.Unix;
+namespace Zdev.Pty.Platforms.Unix;
 
 /// <summary>
 /// What an errno means to a session, as decisions rather than as numbers scattered through the

@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace GitBench.Pty;
+namespace Zdev.Pty;
 
 /// <summary>
 /// A handle shared by a blocking native call and the thread that tears the session down:

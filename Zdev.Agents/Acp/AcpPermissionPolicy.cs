@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
-namespace GitBench.Features.AgentConnections.Acp;
+namespace Zdev.Agents.Acp;
 
 /// <summary>One option an agent offered on a permission request.</summary>
 public sealed record AcpPermissionOption(string OptionId, string Name, AcpPermissionOptionKind Kind);

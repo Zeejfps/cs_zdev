@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Bytes in both directions while the child is alive: what it prints reaches

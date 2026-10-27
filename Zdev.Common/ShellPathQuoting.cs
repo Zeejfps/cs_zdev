@@ -1,4 +1,4 @@
-namespace GitBench.Features.Terminal;
+namespace Zdev.Common;
 
 /// <summary>
 /// Quotes a path for a command typed into a running shell.

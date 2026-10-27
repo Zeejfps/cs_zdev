@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Features.AgentConnections;
+namespace Zdev.Agents;
 
 /// <summary>Why a preset's arguments can't be passed to its agent.</summary>
 public abstract record AgentArgumentsProblem

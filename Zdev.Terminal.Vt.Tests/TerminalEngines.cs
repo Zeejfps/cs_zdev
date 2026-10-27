@@ -1,6 +1,6 @@
-using GitBench.Terminal.Vt.Adapters;
+using Zdev.Terminal.Vt.Adapters;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Every engine the suite runs against, addressed by name.

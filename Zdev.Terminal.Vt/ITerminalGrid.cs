@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>
 /// Everything outside the engine may read about the screen.

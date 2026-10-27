@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using GitBench.Infrastructure;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Common.Tests;
 
 // DirectoryTree exists for what a real working tree holds on Windows and git's own recursive
 // delete gets wrong: junctions (which it tries to unlink as files), read-only files, and files

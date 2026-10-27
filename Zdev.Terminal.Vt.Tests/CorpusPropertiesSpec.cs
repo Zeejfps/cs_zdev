@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Properties of a whole recorded session that a golden cannot state and a synthesised byte string

@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 
-namespace GitBench.Pty.Platforms.Unix;
+namespace Zdev.Pty.Platforms.Unix;
 
 /// <summary>
 /// A pseudo-terminal session backed by a POSIX pseudo-terminal and a session-leading posix_spawn.

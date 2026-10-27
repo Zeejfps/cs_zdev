@@ -1,6 +1,6 @@
-using GitBench.Features.Submodules;
+using Zdev.Git;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public interface IGitSubmoduleOperations
 {

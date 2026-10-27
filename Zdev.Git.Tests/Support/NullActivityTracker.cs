@@ -1,6 +1,6 @@
-using GitBench.Features.Repos;
+using Zdev.Git;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 internal sealed class NullActivityTracker : IRepoActivityTracker
 {

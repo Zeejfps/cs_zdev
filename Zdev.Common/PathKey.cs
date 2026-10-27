@@ -1,4 +1,4 @@
-namespace GitBench.Infrastructure;
+namespace Zdev.Common;
 
 // Canonical key for a repo working-dir path: full path with trailing separators trimmed, compared
 // case-insensitively on Windows. The identity-override map (RepoRegistry) and the resolver memo

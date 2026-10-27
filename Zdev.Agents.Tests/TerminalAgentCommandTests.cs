@@ -1,8 +1,8 @@
-using GitBench.Features.Pairing;
-using GitBench.Features.Terminal;
+using Zdev.Agents;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Agents.Tests;
 
 /// <summary>A terminal preset's command is filled in quoted for the shell that runs it, so a goal
 /// never reaches the shell as syntax.</summary>

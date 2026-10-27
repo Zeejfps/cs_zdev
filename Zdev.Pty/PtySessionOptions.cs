@@ -1,4 +1,4 @@
-namespace GitBench.Pty;
+namespace Zdev.Pty;
 
 /// <summary>
 /// What to spawn on a pseudo-terminal, and the terminal state it starts with.

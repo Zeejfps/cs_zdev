@@ -1,10 +1,8 @@
-using GitBench.Features.Repos;
-using GitBench.Features.Worktrees;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // Adding a worktree against a real repo with a submodule. `git worktree add` populates the
 // superproject only, so a worktree of a repo with submodules arrives with empty submodule

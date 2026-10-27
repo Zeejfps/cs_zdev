@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 // Range = the combined "net diff" of a review range: base→head as one diff (DiffTarget carries both
 // SHAs — CommitSha = head, BaseSha = base). Renders like Commit (read-only, not stageable).

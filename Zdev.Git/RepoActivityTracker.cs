@@ -1,6 +1,6 @@
-using GitBench.Infrastructure;
+using Zdev.Common;
 
-namespace GitBench.Features.Repos;
+namespace Zdev.Git;
 
 // Per-repo "git is currently running" gate consulted by RepoWatcher before it
 // broadcasts a debounced change.

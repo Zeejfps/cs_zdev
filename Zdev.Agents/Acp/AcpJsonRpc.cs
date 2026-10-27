@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace GitBench.Features.AgentConnections.Acp;
+namespace Zdev.Agents.Acp;
 
 /// <summary>What the agent sent the client unasked: a notification, or a request the client must
 /// answer.</summary>

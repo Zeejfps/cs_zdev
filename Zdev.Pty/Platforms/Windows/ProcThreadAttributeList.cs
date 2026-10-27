@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace GitBench.Pty.Platforms.Windows;
+namespace Zdev.Pty.Platforms.Windows;
 
 /// <summary>
 /// The attribute list that hands a child process its pseudo-console, and the unmanaged block it

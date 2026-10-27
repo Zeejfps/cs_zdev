@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// Escape-sequence literals, spelled the way the recorded inventories spell them, so a test reads

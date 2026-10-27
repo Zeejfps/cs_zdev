@@ -1,7 +1,7 @@
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // RemoteWebUrl turns whatever `git remote get-url` returns into a browser address. The shapes
 // below are the ones real hosts hand out (GitHub/GitLab/Bitbucket clone dialogs) plus the

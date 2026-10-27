@@ -1,5 +1,5 @@
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public interface IGitConfigOperations
 {

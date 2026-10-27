@@ -1,7 +1,7 @@
 using System.Text;
-using GitBench.Git;
+using Zdev.Git;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 /// <summary>
 /// A real repository parked mid-merge (or mid-rebase) with one conflict of every shape the conflict

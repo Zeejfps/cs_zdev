@@ -1,7 +1,7 @@
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The read gate is the one throttle every background git read shares (§6): it bounds concurrency so a
 // many-repo tree can't seek-thrash one disk, and times each read per (repo, kind) so §7 can read the

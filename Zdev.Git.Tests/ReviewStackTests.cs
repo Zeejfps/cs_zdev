@@ -1,10 +1,7 @@
-using GitBench.Features.Commits;
-using GitBench.Features.Repos;
-using GitBench.Features.Review;
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // Range backend (Phase 4): GitService.LoadReviewStack lists base..head as a first-parent stack
 // oldest→newest, and MergeBase/ResolveAutoReviewBase anchor the base. Each test builds a fresh

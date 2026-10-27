@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// A line-oriented difference report for the snapshot format.

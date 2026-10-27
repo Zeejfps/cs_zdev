@@ -1,5 +1,5 @@
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// The scanner that decides where a corpus is snapshotted. Every golden's frame boundaries rest on

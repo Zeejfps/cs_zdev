@@ -1,7 +1,6 @@
-using GitBench.Features.Commits;
-using GitBench.Features.Review;
+using Zdev.Git;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public interface IGitHistoryReader
 {

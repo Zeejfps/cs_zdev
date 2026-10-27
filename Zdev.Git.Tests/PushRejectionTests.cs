@@ -1,9 +1,8 @@
-using GitBench.Features.Repos;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The real GitService against a throwaway bare origin: a push refused because someone else pushed
 // first must come back as Rejected (the pull-then-push dialog's cue), and the recovery that dialog

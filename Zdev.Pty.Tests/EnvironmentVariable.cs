@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Sets a variable on this process for the duration of a test, so a child can be observed

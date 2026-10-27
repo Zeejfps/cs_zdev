@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// The decoder every terminal assertion rests on. If it dropped the wrong bytes the suite would

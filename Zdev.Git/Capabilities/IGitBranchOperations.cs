@@ -1,6 +1,6 @@
-using GitBench.Features.Branches;
+using Zdev.Git;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public interface IGitBranchOperations
 {

@@ -1,7 +1,7 @@
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The working-tree review maps a displayed HEAD→disk hunk onto the file's index→worktree hunks by
 // their new-side (disk) line ranges — both diffs share the same new side, so the ranges are

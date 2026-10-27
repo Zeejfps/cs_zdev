@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32.SafeHandles;
 
-namespace GitBench.Pty.Platforms.Windows;
+namespace Zdev.Pty.Platforms.Windows;
 
 [StructLayout(LayoutKind.Sequential)]
 internal struct Coord
@@ -81,7 +81,7 @@ internal static unsafe partial class WindowsNative
     public static partial bool CloseHandle(IntPtr handle);
 
     // The three pseudo-console entry points come from the ConPTY shipped beside the app, not from
-    // kernel32: see GitBench.Pty.csproj for why the inbox host is not used.
+    // kernel32: see Zdev.Pty.csproj for why the inbox host is not used.
     [LibraryImport("conpty.dll", SetLastError = true)]
     public static partial int CreatePseudoConsole(
         Coord size, SafeFileHandle input, SafeFileHandle output, uint flags, out IntPtr pseudoConsole);

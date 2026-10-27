@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
 using Microsoft.Win32.SafeHandles;
 
-namespace GitBench.Pty.Platforms.Unix;
+namespace Zdev.Pty.Platforms.Unix;
 
 /// <summary>
 /// Owns an open file descriptor, closing it when it is released.

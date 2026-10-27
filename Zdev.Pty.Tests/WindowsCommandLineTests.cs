@@ -1,8 +1,8 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using GitBench.Pty.Platforms.Windows;
+using Zdev.Pty.Platforms.Windows;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Pins the argv -> CreateProcessW command line encoding. The explicit cases document the shape;

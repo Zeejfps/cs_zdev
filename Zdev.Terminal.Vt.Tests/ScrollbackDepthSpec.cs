@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// <see cref="TerminalSetup.ScrollbackLines"/> as a contract rather than an engine's private

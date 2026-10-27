@@ -1,4 +1,4 @@
-namespace GitBench.Features.Branches;
+namespace Zdev.Git;
 
 public sealed record BranchSync(int Ahead, int Behind);
 

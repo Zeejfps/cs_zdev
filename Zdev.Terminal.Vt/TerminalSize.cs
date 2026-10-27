@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>
 /// The character dimensions of a terminal viewport.

@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>Which of <see cref="RefNameRules"/>' rules a name breaks, if any.</summary>
 public enum RefNameViolation { None, Spaces, LeadingDash, DoubleDot, TrailingSlash }

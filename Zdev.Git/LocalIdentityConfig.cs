@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 // A repo's Git identity as the --local config keys the app manages. The single source
 // of truth shared by injection (PrefixArgs) and "pin to repo" (GitService.PinLocalIdentity), so

@@ -1,7 +1,7 @@
 using System.Text;
-using static GitBench.Terminal.Vt.Tests.Vt;
+using static Zdev.Terminal.Vt.Tests.Vt;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// OSC 52, the clipboard sequence. A program on the far end of a pseudo-terminal is not trusted, so

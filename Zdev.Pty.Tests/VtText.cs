@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Reads a pseudo-terminal stream the way a person reads a screen: escape sequences dropped and

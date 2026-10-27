@@ -1,6 +1,6 @@
-using GitBench.Pty.Platforms.Unix;
+using Zdev.Pty.Platforms.Unix;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// The errno decisions a Unix session makes, asserted as a table on every host.

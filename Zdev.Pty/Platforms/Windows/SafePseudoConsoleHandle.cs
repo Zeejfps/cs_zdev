@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
 using Microsoft.Win32.SafeHandles;
 
-namespace GitBench.Pty.Platforms.Windows;
+namespace Zdev.Pty.Platforms.Windows;
 
 /// <summary>
 /// Owns an HPCON, closing the pseudo-console — and with it the terminal side of both pipes — when

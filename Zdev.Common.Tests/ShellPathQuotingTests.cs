@@ -1,7 +1,7 @@
-using GitBench.Features.Terminal;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Common.Tests;
 
 public class ShellPathQuotingTests
 {

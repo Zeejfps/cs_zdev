@@ -1,4 +1,4 @@
-namespace GitBench.Lsp.Lifecycle;
+namespace Zdev.Common;
 
 /// <summary>
 /// Where a server's executable is found, and what environment it starts with.

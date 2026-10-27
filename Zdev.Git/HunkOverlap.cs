@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// Maps a hunk of one diff onto the hunks of another by the line ranges of the side the two diffs

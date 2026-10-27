@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// What a run of sessions leaves behind. Every other test here asks whether one session behaved;

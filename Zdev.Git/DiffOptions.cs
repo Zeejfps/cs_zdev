@@ -1,4 +1,4 @@
-namespace GitBench.Features.Diff;
+namespace Zdev.Git;
 
 public static class DiffOptions
 {

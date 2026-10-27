@@ -1,7 +1,7 @@
-using GitBench.Features.Repos;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The watcher used to build its gitdir as `<repo>/.git`, which is only true for a primary repo. A
 // linked worktree and a submodule both have a gitlink *file* there instead, so every path the

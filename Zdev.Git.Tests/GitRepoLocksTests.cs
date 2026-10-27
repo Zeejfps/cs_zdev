@@ -1,7 +1,7 @@
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The lock split is the whole fix for "a stage click during a fetch does nothing until the fetch
 // ends": a network round-trip and an index write are different resources, so they must be different

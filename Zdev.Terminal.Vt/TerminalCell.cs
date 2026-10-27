@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>
 /// The SGR attributes that survive as per-cell state.

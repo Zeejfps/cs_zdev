@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>
 /// Which hyperlink a cell belongs to, as an opaque token issued by one grid.

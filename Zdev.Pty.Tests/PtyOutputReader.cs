@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Drains <see cref="IPtySession.ReadOutput"/> on a dedicated thread — the way the real terminal

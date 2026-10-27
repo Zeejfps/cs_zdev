@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>How the cursor is drawn.</summary>
 public enum CursorShape : byte { Block = 0, Underline = 1, Bar = 2 }

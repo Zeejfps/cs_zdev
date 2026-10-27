@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public enum RepoKind
 {

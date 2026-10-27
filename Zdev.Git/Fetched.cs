@@ -1,6 +1,6 @@
-using GitBench.Infrastructure;
+using Zdev.Common;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 // Result of a git read: the loaded value or why the read failed. A value can no longer
 // coexist with an error the way the old ErrorMessage-in-snapshot fields allowed.

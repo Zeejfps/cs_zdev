@@ -1,10 +1,8 @@
-using GitBench.Features.Branches;
-using GitBench.Features.Repos;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // GetBranches parses `git for-each-ref` into the local-branch union: the checked-out branch becomes
 // LocalBranchEntry.Head (upstream existence only — no counts, those belong to IRepoStatusStore),

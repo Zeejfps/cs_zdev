@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>Which of the pane's own colours a dynamic-colour sequence addressed.</summary>
 public enum TerminalColorSlot : byte

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32.SafeHandles;
 
-namespace GitBench.Pty.Platforms.Windows;
+namespace Zdev.Pty.Platforms.Windows;
 
 /// <summary>
 /// A pseudo-terminal session backed by the Windows console pseudo-console (ConPTY).

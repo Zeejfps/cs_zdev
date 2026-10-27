@@ -1,9 +1,7 @@
-using GitBench.Features.LocalChanges;
-using GitBench.Features.Repos;
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // Bulk path operations must survive path lists whose combined length exceeds the Windows
 // 32,767-char CreateProcess command-line cap. The integration tests drive GitService

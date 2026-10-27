@@ -1,11 +1,8 @@
-using GitBench.Features.Commits;
-using GitBench.Features.LocalChanges;
-using GitBench.Features.Repos;
-using GitBench.Git;
-using GitBench.Infrastructure;
+using Zdev.Git;
+using Zdev.Common;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // §2: one `git status --porcelain=v2 --branch` yields both the file lists and the branch / ahead /
 // behind / dirty summary. These drive the real GitService against a throwaway repo wired to a

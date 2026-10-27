@@ -1,4 +1,4 @@
-namespace GitBench.Features.Submodules;
+namespace Zdev.Git;
 
 public enum SubmoduleStatus
 {

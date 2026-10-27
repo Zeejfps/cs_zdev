@@ -1,8 +1,7 @@
-using GitBench.Features.Repos;
-using GitBench.Git;
+using Zdev.Git;
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 // The two conflict reads the assistant's tools need from IGitService, against a repository git
 // really did leave half-merged: the whole unmerged list in one answer, and one path's three merge

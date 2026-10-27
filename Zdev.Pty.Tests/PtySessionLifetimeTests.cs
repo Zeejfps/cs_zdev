@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// How a session ends: whether the child finished or the session tore it down, end of stream on

@@ -1,6 +1,6 @@
 
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>How a corpus is handed to the engine — the sizes of the chunks it arrives in.</summary>
 /// <remarks>

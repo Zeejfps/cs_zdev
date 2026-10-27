@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace GitBench.Features.AgentConnections.Acp;
+namespace Zdev.Agents.Acp;
 
 /// <summary>Identifies an ACP harness preset. Persisted, so the values never change meaning.</summary>
 public readonly record struct AcpHarnessId(string Value)

@@ -1,4 +1,4 @@
-namespace GitBench.Pty;
+namespace Zdev.Pty;
 
 /// <summary>
 /// Why a pseudo-terminal session could not be started.

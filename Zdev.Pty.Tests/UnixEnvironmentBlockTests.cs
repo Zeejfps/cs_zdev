@@ -1,7 +1,7 @@
 using System.Text;
-using GitBench.Pty.Platforms.Unix;
+using Zdev.Pty.Platforms.Unix;
 
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// Pins how an overlay layers over the inherited environment on POSIX, where a name is a byte string

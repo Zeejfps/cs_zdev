@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// The environment the user's own tools live in, as opposed to the one the app was launched with.

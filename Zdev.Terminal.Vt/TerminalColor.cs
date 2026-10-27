@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>Which colour space a <see cref="TerminalColor"/> is expressed in.</summary>
 public enum TerminalColorKind : byte

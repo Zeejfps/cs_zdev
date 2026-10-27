@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace GitBench.Terminal.Vt.Tests;
+namespace Zdev.Terminal.Vt.Tests;
 
 /// <summary>
 /// A frozen copy of everything <see cref="ITerminalGrid"/> and <see cref="TerminalState"/> expose,

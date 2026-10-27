@@ -1,6 +1,6 @@
-using GitBench.Infrastructure;
+using Zdev.Common;
 
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 public abstract record GitOutcome : IOutcome<GitOutcome>
 {

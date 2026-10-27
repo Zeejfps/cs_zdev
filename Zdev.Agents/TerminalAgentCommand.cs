@@ -1,6 +1,6 @@
-using GitBench.Features.Terminal;
+using Zdev.Common;
 
-namespace GitBench.Features.Pairing;
+namespace Zdev.Agents;
 
 /// <summary>The values a terminal preset's command template is filled with.</summary>
 public sealed record TerminalAgentValues(string Prompt, string PromptFile, Uri McpUrl, string McpConfigFile, string WorkingDirectory);

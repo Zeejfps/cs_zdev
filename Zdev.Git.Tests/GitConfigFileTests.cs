@@ -1,8 +1,8 @@
-using GitBench.Git;
+using Zdev.Git;
 
 using Xunit;
 
-namespace GitBench.Tests;
+namespace Zdev.Git.Tests;
 
 /// <summary>
 /// The parser that replaced <c>git config</c> on the identity path. Its whole justification is

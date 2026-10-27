@@ -3,7 +3,7 @@ using System.Text;
 using XtermSharp;
 using XtermTerminal = XtermSharp.Terminal;
 
-namespace GitBench.Terminal.Vt.Adapters;
+namespace Zdev.Terminal.Vt.Adapters;
 
 /// <summary>
 /// The vendored XtermSharp core behind <see cref="ITerminalEngine"/>.

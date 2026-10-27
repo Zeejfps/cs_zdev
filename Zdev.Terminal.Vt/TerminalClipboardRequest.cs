@@ -1,4 +1,4 @@
-namespace GitBench.Terminal.Vt;
+namespace Zdev.Terminal.Vt;
 
 /// <summary>Which of the terminal's clipboards an OSC 52 sequence addressed.</summary>
 public enum ClipboardTarget : byte

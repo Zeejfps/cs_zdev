@@ -1,4 +1,4 @@
-namespace GitBench.Pty;
+namespace Zdev.Pty;
 
 /// <summary>
 /// A child process running on a pseudo-terminal: bytes out, bytes in, a size, and an end.

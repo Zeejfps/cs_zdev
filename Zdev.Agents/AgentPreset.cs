@@ -1,4 +1,4 @@
-namespace GitBench.Features.AgentConnections;
+namespace Zdev.Agents;
 
 /// <summary>Identifies an agent preset. The built-in presets keep the ids the agents had before
 /// presets existed, so a remembered pick still finds its agent.</summary>

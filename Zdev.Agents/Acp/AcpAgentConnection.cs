@@ -2,9 +2,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Nodes;
-using GitBench.Lsp.Lifecycle;
+using Zdev.Common;
 
-namespace GitBench.Features.AgentConnections.Acp;
+namespace Zdev.Agents.Acp;
 
 /// <summary>Asks the user about a permission request the policy leaves open. Answers the chosen
 /// option id, or null to cancel the tool call.</summary>

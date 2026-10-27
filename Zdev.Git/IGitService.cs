@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 // The whole of git, for the few callers that genuinely span capabilities. Prefer depending on the
 // narrowest capability interface a type actually uses — that is what keeps its test doubles small.

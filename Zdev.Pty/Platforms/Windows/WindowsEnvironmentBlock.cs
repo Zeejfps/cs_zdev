@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Text;
 
-namespace GitBench.Pty.Platforms.Windows;
+namespace Zdev.Pty.Platforms.Windows;
 
 /// <summary>
 /// Layers an environment overlay over an inherited environment and encodes the result as the

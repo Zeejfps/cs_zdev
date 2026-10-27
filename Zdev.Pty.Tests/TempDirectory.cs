@@ -1,4 +1,4 @@
-namespace GitBench.Pty.Tests;
+namespace Zdev.Pty.Tests;
 
 /// <summary>
 /// A throwaway directory for a child to start in. Its <see cref="Token"/> is unique, so finding it

@@ -1,4 +1,4 @@
-namespace GitBench.Git;
+namespace Zdev.Git;
 
 /// <summary>
 /// Converts a git remote URL into the https address a browser can open — e.g.
