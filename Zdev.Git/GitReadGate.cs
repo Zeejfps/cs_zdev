@@ -85,7 +85,7 @@ public interface IGitReadGate
     readonly struct Permit : IDisposable
     {
         private readonly Action? _release;
-        internal Permit(Action release) => _release = release;
+        public Permit(Action release) => _release = release;
         public void Dispose() => _release?.Invoke();
     }
 }
@@ -104,7 +104,7 @@ public sealed class GitReadGate : IGitReadGate, IDisposable
     // Exactly the active repo's switch fan-out (commits + branches + local). Larger admits cross-repo
     // thrash; smaller makes the active repo wait on itself. Fixed and low, like GitRepoLocks' size-1
     // per-repo semaphores — not disk-adaptive, not a preference.
-    internal const int MaxConcurrentReads = 3;
+    public const int MaxConcurrentReads = 3;
 
     // One permit no Background or Sweep read may take, so a read the user just caused is admitted
     // without waiting out a cold status walk that is already running. The trade is background sweeps
