@@ -43,6 +43,10 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
 
     private readonly AcpJsonRpc _rpc;
     private readonly Process? _process;
+
+    /// <summary>The processes the agent runs as, all ended with it; none for a connection over the
+    /// caller's streams.</summary>
+    private readonly AgentProcessTree? _tree;
     private readonly IAcpPermissionPrompt _prompt;
     private readonly string? _ownServer;
     private readonly Dictionary<string, string> _announcedServers = new();
@@ -54,6 +58,7 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     private AcpAgentConnection(TextReader incoming, TextWriter outgoing, Process? process, IAcpPermissionPrompt prompt, string? ownServer)
     {
         _process = process;
+        _tree = process is null ? null : AgentProcessTree.Adopt(process);
         _prompt = prompt;
         _ownServer = ownServer;
         _rpc = new AcpJsonRpc(incoming, outgoing, this);
@@ -401,21 +406,12 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 1) return;
-        if (_process is { } process)
-        {
-            try
-            {
-                if (!process.HasExited) process.Kill(entireProcessTree: true);
-            }
-            catch (InvalidOperationException)
-            {
-            }
-            catch (Win32Exception)
-            {
-            }
-        }
+        // Ended whether or not the first process has exited: a wrapper such as npx exits and leaves
+        // the adapter it started running.
+        _tree?.End();
 
         await _rpc.DisposeAsync().ConfigureAwait(false);
+        _tree?.Dispose();
         _process?.Dispose();
     }
 }
