@@ -170,6 +170,9 @@ public sealed class AcpJsonRpc : IAsyncDisposable
         _ = AnswerAsync(id.DeepClone(), method, parameters);
     }
 
+    // Every request gets an answer, or the agent waits for it forever and its turn never ends. Only
+    // the connection closing leaves one unanswered, since then there is no one to answer. Anything
+    // else the handler fails with goes back to the agent as an internal error, which it reports.
     private async Task AnswerAsync(JsonNode id, string method, JsonNode? parameters)
     {
         JsonObject reply;
@@ -182,9 +185,13 @@ public sealed class AcpJsonRpc : IAsyncDisposable
         {
             reply = ErrorReply(id, e.Code, e.Message);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (_stop.IsCancellationRequested)
         {
             return;
+        }
+        catch (Exception e)
+        {
+            reply = ErrorReply(id, AcpRpcException.InternalError, $"{method} failed: {e.Message}");
         }
 
         try
