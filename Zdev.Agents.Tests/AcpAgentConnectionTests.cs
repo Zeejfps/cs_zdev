@@ -45,6 +45,40 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task Connect_OverStreams_OpensTheSessionInTheHarnessAskingMode_AndTakesTurns()
+    {
+        var harness = AcpHarness.ClaudeCode with { ChatMode = "auto" };
+        _agent.OnPrompt = async agent =>
+        {
+            await agent.Update("""{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Hi."}}""");
+            return "end_turn";
+        };
+
+        var start = await AcpAgentConnection.ConnectAsync(_agent.ClientReads, _agent.ClientWrites, harness, "C:/repo", Server, _prompt,
+            CancellationToken.None).WaitAsync(Deadline);
+
+        await using var connection = Assert.IsType<AcpStart.Started>(start).Connection;
+        var updates = new List<AcpSessionUpdate>();
+        connection.Updated += u => { lock (updates) updates.Add(u); };
+        var stop = await connection.PromptAsync("hello", CancellationToken.None).WaitAsync(Deadline);
+        Assert.Equal(AcpStopReason.EndTurn, stop);
+        Assert.Equal(["initialize", "session/new", "session/set_mode", "session/prompt"], _agent.Methods);
+        Assert.Equal("default", _agent.Params("session/set_mode")!["modeId"]!.GetValue<string>());
+        Assert.Contains(updates, u => u is AcpSessionUpdate.MessageChunk { Text: "Hi." });
+    }
+
+    [Fact]
+    public async Task Connect_ToAnAgentWithoutTheChatMode_FailsAndSaysWhich()
+    {
+        var harness = AcpHarness.ClaudeCode with { ChatMode = "yolo" };
+
+        var start = await AcpAgentConnection.ConnectAsync(_agent.ClientReads, _agent.ClientWrites, harness, "C:/repo", Server, _prompt,
+            CancellationToken.None).WaitAsync(Deadline);
+
+        Assert.Contains("yolo", Assert.IsType<AcpStart.Failed>(start).Reason);
+    }
+
+    [Fact]
     public async Task AnAgentThatEmbedsContext_GetsTheSelectionAsAnAttachedResource()
     {
         _agent.Capabilities = """{"promptCapabilities":{"embeddedContext":true}}""";

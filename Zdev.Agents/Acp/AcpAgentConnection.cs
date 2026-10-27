@@ -127,24 +127,54 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         };
         process.BeginErrorReadLine();
 
-        string? failure;
-        try
-        {
-            failure = await connection.OpenAsync(workingDirectory, server, harness.AskingMode, harness.SessionMetaJson, ct).ConfigureAwait(false);
-            if (failure is null && harness.ChatMode is { } chatMode && !connection.Offers(chatMode))
-                failure = $"The agent offers no '{chatMode}' mode.";
-        }
-        catch
-        {
-            await connection.DisposeAsync().ConfigureAwait(false);
-            throw;
-        }
-
+        var failure = await connection.OpenForHarnessAsync(harness, workingDirectory, server, ct).ConfigureAwait(false);
         if (failure is null) return new AcpStart.Started(connection);
 
         await connection.DisposeAsync().ConfigureAwait(false);
         var tail = connection.StderrTail;
         return new AcpStart.Failed(tail.Length == 0 ? failure : $"{failure}\n{tail}");
+    }
+
+    /// <summary>
+    /// Opens a session with an agent the caller runs at the far end of <paramref name="incoming"/>
+    /// and <paramref name="outgoing"/>, as <see cref="StartAsync"/> does with the process it starts:
+    /// the same handshake, modes and write guard. For an agent on another transport, or one a test
+    /// plays in process. The connection owns no process, and disposing it stops reading but leaves
+    /// the streams to the caller.
+    /// </summary>
+    public static async Task<AcpStart> ConnectAsync(
+        TextReader incoming,
+        TextWriter outgoing,
+        AcpHarness harness,
+        string workingDirectory,
+        AcpMcpServer server,
+        IAcpPermissionPrompt prompt,
+        CancellationToken ct)
+    {
+        var connection = Over(incoming, outgoing, prompt, server.Name);
+        var failure = await connection.OpenForHarnessAsync(harness, workingDirectory, server, ct).ConfigureAwait(false);
+        if (failure is null) return new AcpStart.Started(connection);
+
+        await connection.DisposeAsync().ConfigureAwait(false);
+        return new AcpStart.Failed(failure);
+    }
+
+    /// <summary>Opens the session in <paramref name="harness"/>'s asking mode and checks it offers the
+    /// chat mode too. Answers why it could not, or null; disposes the connection when it throws.</summary>
+    private async Task<string?> OpenForHarnessAsync(AcpHarness harness, string workingDirectory, AcpMcpServer server, CancellationToken ct)
+    {
+        try
+        {
+            var failure = await OpenAsync(workingDirectory, server, harness.AskingMode, harness.SessionMetaJson, ct).ConfigureAwait(false);
+            if (failure is null && harness.ChatMode is { } chatMode && !Offers(chatMode))
+                failure = $"The agent offers no '{chatMode}' mode.";
+            return failure;
+        }
+        catch
+        {
+            await DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     /// <summary>A connection over given streams, for tests: no process to own.</summary>
