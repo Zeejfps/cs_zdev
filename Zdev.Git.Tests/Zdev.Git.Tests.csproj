@@ -7,6 +7,9 @@
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <PublishAot>false</PublishAot>
+        <!-- Several of these tests hold a gate open by parking a pool thread, the same reason
+             GitBench's suite raises the floor. -->
+        <ThreadPoolMinThreads>256</ThreadPoolMinThreads>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,16 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit" />
-        <!--
-            NStack.Core arrives transitively with the vendored engine and declares its own
-            System.Rune. Without this alias every mention of Rune here is ambiguous.
-        -->
-        <Using Include="System.Text.Rune" Alias="Rune" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\GitBench.Terminal.Vt\GitBench.Terminal.Vt.csproj" />
+        <ProjectReference Include="..\Zdev.Git\Zdev.Git.csproj" />
     </ItemGroup>
 
 </Project>

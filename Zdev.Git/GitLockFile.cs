@@ -9,7 +9,7 @@ namespace GitBench.Git;
 /// function of the error text — a dialog can offer the recovery without knowing which repo it is
 /// talking about.
 /// </summary>
-internal static partial class GitLockFile
+public static partial class GitLockFile
 {
     // Matches both the fatal form ("fatal: Unable to create '<path>': File exists.") and the
     // plain one git emits for ref locks; the trailing period is optional across git versions.

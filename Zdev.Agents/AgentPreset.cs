@@ -48,7 +48,7 @@ public sealed record AgentPreset(
     public override int GetHashCode() => HashCode.Combine(Id, Name, Kind, Permission, Arguments.Count);
 }
 
-internal static class AgentKinds
+public static class AgentKinds
 {
     public static readonly IReadOnlyList<AgentKind> All = [AgentKind.ClaudeCode, AgentKind.Codex, AgentKind.Gemini];
 

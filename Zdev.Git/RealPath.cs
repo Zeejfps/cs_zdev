@@ -10,7 +10,7 @@ namespace GitBench.Git;
 /// both sides put through the same resolution. <see cref="FileSystemInfo.ResolveLinkTarget"/> follows
 /// only a link that is the path's last segment, so the walk has to go a segment at a time.
 /// </remarks>
-internal static class RealPath
+public static class RealPath
 {
     public static string Of(string path)
     {

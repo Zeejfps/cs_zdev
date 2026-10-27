@@ -1,7 +1,6 @@
 using GitBench.Features.Branches;
 using GitBench.Features.Commits;
 using GitBench.Features.Diff;
-using GitBench.Features.Identity;
 using GitBench.Features.LocalChanges;
 using GitBench.Features.Repos;
 using GitBench.Features.Review;

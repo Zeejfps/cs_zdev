@@ -1,6 +1,6 @@
 namespace GitBench.Git;
 
-internal enum RemoteUrlScheme
+public enum RemoteUrlScheme
 {
     Ssh,
     Https,
@@ -14,7 +14,7 @@ internal enum RemoteUrlScheme
 /// parse into host + path is reported as <see cref="RemoteUrlScheme.Other"/> and left
 /// untouched by <see cref="Convert"/>, so exotic URLs round-trip unchanged.
 /// </summary>
-internal static class RemoteUrl
+public static class RemoteUrl
 {
     // Host + owner (the first path segment — the org/user) of a remote URL, used to match a
     // repo to an identity profile. Returns false for URLs we can't parse into host + path.

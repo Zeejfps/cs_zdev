@@ -1,4 +1,3 @@
-using GitBench.Features.Repos;
 using GitBench.Git;
 using Xunit;
 
@@ -13,6 +12,11 @@ public sealed class GitInitTests : IDisposable
 
     public void Dispose() => _dir.Dispose();
 
+    // The check RepoStateStore makes before the app opens a folder: `.git` as a directory, or as the
+    // gitlink file a worktree or submodule has.
+    private static bool IsGitRepo(string path) =>
+        Directory.Exists(Path.Combine(path, ".git")) || File.Exists(Path.Combine(path, ".git"));
+
     [Fact]
     public void Init_makes_an_empty_folder_a_repository()
     {
@@ -20,7 +24,7 @@ public sealed class GitInitTests : IDisposable
         Directory.CreateDirectory(path);
 
         Assert.IsType<GitOutcome.Success>(_git.Init(path));
-        Assert.True(RepoStateStore.IsGitRepo(path));
+        Assert.True(IsGitRepo(path));
     }
 
     [Fact]
@@ -29,7 +33,7 @@ public sealed class GitInitTests : IDisposable
         var path = Path.Combine(_dir.Path, "not-yet", "nested");
 
         Assert.IsType<GitOutcome.Success>(_git.Init(path));
-        Assert.True(RepoStateStore.IsGitRepo(path));
+        Assert.True(IsGitRepo(path));
     }
 
     [Fact]

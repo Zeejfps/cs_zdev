@@ -8,7 +8,7 @@ namespace GitBench.Git;
 /// consumer can ask for one kind's cost specifically — §7's adaptive debounce reads the <see
 /// cref="GitReadKind.Status"/> duration rather than whatever read happened to land last.
 /// </summary>
-internal enum GitReadKind
+public enum GitReadKind
 {
     Status,
     // The refs-only ahead/behind read. Deliberately distinct from Status: it never walks the
@@ -24,7 +24,7 @@ internal enum GitReadKind
 /// How a read ranks for admission. Derived from (repo, kind) at the moment a permit frees rather
 /// than passed in by the caller, so switching repos re-ranks reads that are already queued.
 /// </summary>
-internal enum GitReadPriority
+public enum GitReadPriority
 {
     // The repo the user is looking at. Admitted ahead of everything else, and never blocked by a
     // saturated gate: one permit is held back for this class alone.
@@ -45,7 +45,7 @@ internal enum GitReadPriority
 /// enter here — the two mechanisms are disjoint by construction (a gated read takes no mutation lock;
 /// a mutation never calls the gate), so they cannot deadlock.</para>
 /// </summary>
-internal interface IGitReadGate
+public interface IGitReadGate
 {
     /// <summary>
     /// Waits until fewer than <see cref="GitReadGate.MaxConcurrentReads"/> reads are in flight, then
@@ -99,7 +99,7 @@ internal interface IGitReadGate
 /// by <see cref="GitReadPriority"/> so the repo on screen is served first. A DI singleton, like §11's
 /// <see cref="GitRepoLocks"/>.
 /// </summary>
-internal sealed class GitReadGate : IGitReadGate, IDisposable
+public sealed class GitReadGate : IGitReadGate, IDisposable
 {
     // Exactly the active repo's switch fan-out (commits + branches + local). Larger admits cross-repo
     // thrash; smaller makes the active repo wait on itself. Fixed and low, like GitRepoLocks' size-1

@@ -8,16 +8,16 @@ namespace GitBench.Features.AgentConnections.Acp;
 
 /// <summary>Asks the user about a permission request the policy leaves open. Answers the chosen
 /// option id, or null to cancel the tool call.</summary>
-internal interface IAcpPermissionPrompt
+public interface IAcpPermissionPrompt
 {
     Task<string?> AskAsync(AcpPermissionRequest request, CancellationToken ct);
 }
 
 /// <summary>The app's MCP server as a session is handed it.</summary>
-internal sealed record AcpMcpServer(string Name, Uri Url);
+public sealed record AcpMcpServer(string Name, Uri Url);
 
 /// <summary>How starting an agent went.</summary>
-internal abstract record AcpStart
+public abstract record AcpStart
 {
     public sealed record Started(AcpAgentConnection Connection) : AcpStart;
 
@@ -31,7 +31,7 @@ internal abstract record AcpStart
 /// session is put in its harness's asking mode first, so that no write is decided inside the CLI.
 /// Events are raised on the reader's thread.
 /// </summary>
-internal sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
+public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
 {
     /// <summary>Whether the agent takes a file's text attached to a turn as context, rather than
     /// only prose.</summary>

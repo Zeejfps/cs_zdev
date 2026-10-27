@@ -11,7 +11,7 @@ namespace GitBench.Git;
 // returns a uniform GitResult. Centralizing this is what guarantees the activity scope is
 // opened for EVERY invocation — reads and mutations alike — rather than per call site, which
 // previously left mutations (checkout/merge/reset/pull) outside the FSW-loop guard.
-internal sealed class GitProcessRunner
+public sealed class GitProcessRunner
 {
     private readonly IRepoActivityTracker _activity;
 

@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="GitBench.Pty.Tests" />
+        <InternalsVisibleTo Include="Zdev.Pty.Tests" />
     </ItemGroup>
 
     <!--

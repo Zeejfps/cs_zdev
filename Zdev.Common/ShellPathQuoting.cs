@@ -16,7 +16,7 @@ namespace GitBench.Features.Terminal;
 /// half-quoted. A refusal is a menu item that does nothing; a bad quote is arbitrary execution.
 /// </para>
 /// </remarks>
-internal static class ShellPathQuoting
+public static class ShellPathQuoting
 {
     /// <summary>The line to type to change directory, or null when the path cannot be expressed
     /// safely in that shell.</summary>

@@ -27,7 +27,7 @@ namespace GitBench.Git;
 /// as it did before.
 /// </para>
 /// </remarks>
-internal sealed class GitBlobReader : IDisposable
+public sealed class GitBlobReader : IDisposable
 {
     /// <summary>How many repositories keep a live reader. Working across a handful in one session
     /// is normal; having thirty registered and a process for each is not.</summary>

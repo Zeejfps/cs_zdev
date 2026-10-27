@@ -1,6 +1,6 @@
 namespace GitBench.Features.Diff;
 
-internal static class DiffOptions
+public static class DiffOptions
 {
     public const int ContextLines = 3;
     public const int TruncationLineCap = 5000;

@@ -2,7 +2,7 @@ using System.Text;
 
 namespace GitBench.Git;
 
-internal static class HunkPatchBuilder
+public static class HunkPatchBuilder
 {
     public static bool CanPatchHunk(DiffResult diff)
     {

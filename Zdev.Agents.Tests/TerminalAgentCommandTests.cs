@@ -1,7 +1,5 @@
 using GitBench.Features.Pairing;
 using GitBench.Features.Terminal;
-using GitBench.Pty;
-using GitBench.Terminal.Vt;
 using Xunit;
 
 namespace GitBench.Tests;
@@ -49,14 +47,5 @@ public sealed class TerminalAgentCommandTests
 
         Assert.Contains("--mcp-config '/tmp/p/mcp.json'", command);
         Assert.Contains("--disallowedTools Edit,Write", command);
-    }
-
-    [Fact]
-    public void ForCommand_RunsTheLineInTheUsersShell()
-    {
-        var options = ShellCommand.ForCommand("/repo", new PtySize(80, 24), new TerminalRgb(0, 0, 0), "agent go");
-
-        Assert.Equal("agent go", options.Arguments[^1]);
-        Assert.Equal("/repo", options.WorkingDirectory);
     }
 }

@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 namespace GitBench.Features.AgentConnections.Acp;
 
 /// <summary>One block of a user turn.</summary>
-internal abstract record AcpContent
+public abstract record AcpContent
 {
     public sealed record Prose(string Value) : AcpContent;
 
@@ -12,7 +12,7 @@ internal abstract record AcpContent
 }
 
 /// <summary>What a <c>session/update</c> notification says, in the cases the app shows.</summary>
-internal abstract record AcpSessionUpdate
+public abstract record AcpSessionUpdate
 {
     /// <summary>A fragment of the agent's reply to the user.</summary>
     public sealed record MessageChunk(string Text) : AcpSessionUpdate;
@@ -74,7 +74,7 @@ internal abstract record AcpSessionUpdate
         node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
 }
 
-internal enum AcpToolCallStatus
+public enum AcpToolCallStatus
 {
     Pending,
     InProgress,
@@ -83,7 +83,7 @@ internal enum AcpToolCallStatus
 }
 
 /// <summary>Why a prompt turn ended.</summary>
-internal enum AcpStopReason
+public enum AcpStopReason
 {
     EndTurn,
     MaxTokens,

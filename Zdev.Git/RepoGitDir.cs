@@ -8,7 +8,7 @@ namespace GitBench.Features.Repos;
 //
 // Read the link rather than shelling out to `git rev-parse --absolute-git-dir`: no process spawn per
 // repo while the registry is loading, and it still works when git isn't on PATH.
-internal static class RepoGitDir
+public static class RepoGitDir
 {
     private const string GitDirKey = "gitdir:";
 

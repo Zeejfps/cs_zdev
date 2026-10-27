@@ -13,7 +13,7 @@ namespace GitBench.Git;
 /// what makes git, git-lfs, credential helpers and language servers findable. Everywhere else the
 /// process environment is already the user's, and this adds nothing.
 /// </remarks>
-internal static class LoginShellEnvironment
+public static class LoginShellEnvironment
 {
     private const string SnapshotMarker = "@@gitbench-env@@";
     private const int SnapshotTimeoutMs = 10_000;

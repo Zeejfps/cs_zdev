@@ -4,9 +4,9 @@ using System.Text.RegularExpressions;
 namespace GitBench.Features.AgentConnections.Acp;
 
 /// <summary>One option an agent offered on a permission request.</summary>
-internal sealed record AcpPermissionOption(string OptionId, string Name, AcpPermissionOptionKind Kind);
+public sealed record AcpPermissionOption(string OptionId, string Name, AcpPermissionOptionKind Kind);
 
-internal enum AcpPermissionOptionKind
+public enum AcpPermissionOptionKind
 {
     AllowOnce,
     AllowAlways,
@@ -15,7 +15,7 @@ internal enum AcpPermissionOptionKind
 }
 
 /// <summary>What a tool call does, as the agent classifies it.</summary>
-internal enum AcpToolKind
+public enum AcpToolKind
 {
     Read,
     Edit,
@@ -38,7 +38,7 @@ internal enum AcpToolKind
 /// of a shell call, where the adapter passes it in the tool call's input. <see cref="Edits"/> are
 /// the changes a file edit would make, and <see cref="Paths"/> every file the call names.
 /// </summary>
-internal sealed record AcpPermissionRequest(
+public sealed record AcpPermissionRequest(
     string ToolCallId,
     string Title,
     AcpToolKind Kind,
@@ -54,10 +54,10 @@ internal sealed record AcpPermissionRequest(
 
 /// <summary>One change an edit would make to a file: the text it replaces, none when it writes the
 /// whole file, and the text it puts there.</summary>
-internal sealed record AcpFileEdit(string Path, string? OldText, string NewText);
+public sealed record AcpFileEdit(string Path, string? OldText, string NewText);
 
 /// <summary>What the client answers a permission request with.</summary>
-internal abstract record AcpPermissionDecision
+public abstract record AcpPermissionDecision
 {
     public sealed record Select(string OptionId, AcpPermissionVerdict Verdict) : AcpPermissionDecision;
 
@@ -65,7 +65,7 @@ internal abstract record AcpPermissionDecision
     public sealed record AskUser : AcpPermissionDecision;
 }
 
-internal enum AcpPermissionVerdict
+public enum AcpPermissionVerdict
 {
     Allowed,
     Rejected,
@@ -77,7 +77,7 @@ internal enum AcpPermissionVerdict
 /// are put to the user too, and the app's own MCP tools are allowed each time they are asked about. The same rules for every harness, which
 /// is why the guard lives in the client rather than in each CLI's flags.
 /// </summary>
-internal static partial class AcpPermissionPolicy
+public static partial class AcpPermissionPolicy
 {
     public static AcpPermissionDecision Decide(AcpPermissionRequest request, string ownServer)
     {

@@ -6,7 +6,7 @@ namespace GitBench.Git;
 /// A shared resource a mutating git op serializes on. Two, because they are not the same resource
 /// and are not even scoped the same way — see <see cref="GitRepoLocks"/>.
 /// </summary>
-internal enum GitResource
+public enum GitResource
 {
     // The index, the working tree and refs. Scoped to one working tree.
     LocalState,
@@ -38,7 +38,7 @@ internal enum GitResource
 /// <para>Reads take no lock at all — libgit2 and the git CLI tolerate concurrent reads, and the next
 /// refresh corrects any brief inconsistency.</para>
 /// </summary>
-internal sealed class GitRepoLocks
+public sealed class GitRepoLocks
 {
     private readonly Func<string, string?> _resolveCommonGitDir;
 

@@ -7,7 +7,7 @@ namespace GitBench.Git;
 /// diff (same old side: HEAD) — so a displayed hunk is resolved to the target diff's hunks covering
 /// the same lines of the shared side.
 /// </summary>
-internal static class HunkOverlap
+public static class HunkOverlap
 {
     /// <summary>
     /// The inclusive new-side line range a hunk actually changes. Added lines contribute their own

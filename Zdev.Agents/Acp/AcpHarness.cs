@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 namespace GitBench.Features.AgentConnections.Acp;
 
 /// <summary>Identifies an ACP harness preset. Persisted, so the values never change meaning.</summary>
-internal readonly record struct AcpHarnessId(string Value)
+public readonly record struct AcpHarnessId(string Value)
 {
     public override string ToString() => Value;
 }
@@ -17,7 +17,7 @@ internal readonly record struct AcpHarnessId(string Value)
 /// isn't there can't be allowed. Between pairing sessions a chat may run in a looser
 /// <see cref="ChatMode"/>; a pairing session always runs in the asking mode.
 /// </summary>
-internal sealed record AcpHarness(
+public sealed record AcpHarness(
     AcpHarnessId Id, string Label, string Command, IReadOnlyList<string> Args, string AskingMode, string? SessionMetaJson = null,
     string? ChatMode = null)
 {
@@ -118,7 +118,7 @@ internal sealed record AcpHarness(
 }
 
 /// <summary>Whether a preset can be run, and the harness that runs it.</summary>
-internal abstract record AcpLaunch
+public abstract record AcpLaunch
 {
     public sealed record Ready(AcpHarness Harness) : AcpLaunch;
 

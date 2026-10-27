@@ -1,4 +1,3 @@
-using GitBench.Features.Identity;
 
 namespace GitBench.Git;
 

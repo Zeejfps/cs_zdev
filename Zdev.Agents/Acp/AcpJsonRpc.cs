@@ -6,7 +6,7 @@ namespace GitBench.Features.AgentConnections.Acp;
 
 /// <summary>What the agent sent the client unasked: a notification, or a request the client must
 /// answer.</summary>
-internal interface IAcpClientMessages
+public interface IAcpClientMessages
 {
     void OnNotification(string method, JsonNode? parameters);
 
@@ -16,7 +16,7 @@ internal interface IAcpClientMessages
 }
 
 /// <summary>An error the other side answered a request with, or one this side answers with.</summary>
-internal sealed class AcpRpcException : Exception
+public sealed class AcpRpcException : Exception
 {
     public const int MethodNotFound = -32601;
     public const int InvalidParams = -32602;
@@ -32,7 +32,7 @@ internal sealed class AcpRpcException : Exception
 /// agent's stdio. Owns id allocation, response matching and the read loop; it knows nothing of
 /// what the methods mean. A line that is not a JSON object is skipped: adapters log to stdout.
 /// </summary>
-internal sealed class AcpJsonRpc : IAsyncDisposable
+public sealed class AcpJsonRpc : IAsyncDisposable
 {
     private readonly TextReader _incoming;
     private readonly TextWriter _outgoing;
@@ -262,15 +262,15 @@ internal sealed class AcpJsonRpc : IAsyncDisposable
 }
 
 /// <summary>The agent's side of the pipe is gone.</summary>
-internal sealed class AcpClosedException : Exception
+public sealed class AcpClosedException : Exception
 {
     public AcpClosedException() : base("The agent's connection is closed.") { }
 }
 
-internal enum AcpDirection
+public enum AcpDirection
 {
     Incoming,
     Outgoing,
 }
 
-internal readonly record struct AcpTraffic(AcpDirection Direction, string Line);
+public readonly record struct AcpTraffic(AcpDirection Direction, string Line);

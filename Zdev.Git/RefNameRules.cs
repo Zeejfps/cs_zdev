@@ -1,7 +1,7 @@
 namespace GitBench.Git;
 
 /// <summary>Which of <see cref="RefNameRules"/>' rules a name breaks, if any.</summary>
-internal enum RefNameViolation { None, Spaces, LeadingDash, DoubleDot, TrailingSlash }
+public enum RefNameViolation { None, Spaces, LeadingDash, DoubleDot, TrailingSlash }
 
 /// <summary>
 /// A lightweight subset of git's refname rules (see <c>git check-ref-format</c>), shared by the
@@ -15,7 +15,7 @@ internal enum RefNameViolation { None, Spaces, LeadingDash, DoubleDot, TrailingS
 /// <see cref="IsValid"/> is the locale-independent gate; the message for display is
 /// <c>RefNameMessages.Validate</c>'s, built from <see cref="Check"/>.
 /// </summary>
-internal static class RefNameRules
+public static class RefNameRules
 {
     public static bool IsValid(string name) => Check(name) == RefNameViolation.None;
 

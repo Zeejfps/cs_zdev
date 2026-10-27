@@ -16,11 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\GitBench.Pty\GitBench.Pty.csproj" />
+        <ProjectReference Include="..\Zdev.Common\Zdev.Common.csproj" />
     </ItemGroup>
 
 </Project>

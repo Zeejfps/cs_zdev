@@ -3,7 +3,7 @@ using System.Text;
 namespace GitBench.Features.AgentConnections;
 
 /// <summary>Why a preset's arguments can't be passed to its agent.</summary>
-internal abstract record AgentArgumentsProblem
+public abstract record AgentArgumentsProblem
 {
     public sealed record UnclosedQuote : AgentArgumentsProblem;
 
@@ -12,7 +12,7 @@ internal abstract record AgentArgumentsProblem
     public sealed record NotAFlag(string Token) : AgentArgumentsProblem;
 }
 
-internal abstract record AgentArgumentsParse
+public abstract record AgentArgumentsParse
 {
     public sealed record Ok(IReadOnlyList<string> Arguments) : AgentArgumentsParse;
 
@@ -20,14 +20,14 @@ internal abstract record AgentArgumentsParse
 }
 
 /// <summary>A long flag as Claude Code's adapter passes it: <c>--name</c>, or <c>--name value</c>.</summary>
-internal sealed record ClaudeFlag(string Name, string? Value);
+public sealed record ClaudeFlag(string Name, string? Value);
 
 /// <summary>
 /// A preset's extra arguments between the text the user types and the list the agent gets: split
 /// on whitespace, with single or double quotes grouping, and no escapes so Windows paths pass
 /// through as typed.
 /// </summary>
-internal static class AgentArguments
+public static class AgentArguments
 {
     public static AgentArgumentsParse Parse(string text, AgentKind kind)
     {

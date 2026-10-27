@@ -3,14 +3,14 @@ using GitBench.Features.Terminal;
 namespace GitBench.Features.Pairing;
 
 /// <summary>The values a terminal preset's command template is filled with.</summary>
-internal sealed record TerminalAgentValues(string Prompt, string PromptFile, Uri McpUrl, string McpConfigFile, string WorkingDirectory);
+public sealed record TerminalAgentValues(string Prompt, string PromptFile, Uri McpUrl, string McpConfigFile, string WorkingDirectory);
 
 /// <summary>
 /// A terminal preset's command line: a template with <c>{prompt}</c>, <c>{promptFile}</c>,
 /// <c>{mcpUrl}</c>, <c>{mcpConfigFile}</c> and <c>{cwd}</c>, each filled in quoted for the shell
 /// that runs it — so nothing the goal says reaches the shell as syntax.
 /// </summary>
-internal static class TerminalAgentCommand
+public static class TerminalAgentCommand
 {
     /// <summary>Claude Code in its own terminal, handed the app's server and told not to edit files;
     /// its shell stays, to run the tests. Flags, not a guard: the CLI enforces them, the app can't.</summary>

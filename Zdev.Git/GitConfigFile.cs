@@ -4,7 +4,7 @@ namespace GitBench.Git;
 
 // Reads `.git/config` instead of spawning `git config`. Local scope only, and include.path is not
 // followed — a key reached only through an include reads as unset.
-internal sealed class GitConfigFile
+public sealed class GitConfigFile
 {
     private static readonly GitConfigFile EmptyConfig = new(new Dictionary<string, List<string>>(StringComparer.Ordinal));
 

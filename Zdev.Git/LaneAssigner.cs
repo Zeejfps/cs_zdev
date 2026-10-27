@@ -1,8 +1,8 @@
 namespace GitBench.Features.Commits;
 
-internal readonly record struct LaneParent(int ParentIndex, int Lane);
+public readonly record struct LaneParent(int ParentIndex, int Lane);
 
-internal readonly record struct LaneAssignment(
+public readonly record struct LaneAssignment(
     int Lane,
     bool HasIncomingAtCommitLane,
     bool IncomingAtCommitLaneDashed,
@@ -10,7 +10,7 @@ internal readonly record struct LaneAssignment(
     GraphLane[] IncomingLanes,
     GraphLane[] PassThroughLanes);
 
-internal static class LaneAssigner
+public static class LaneAssigner
 {
     // IsAuxiliary marks stash and remote-only commits; lanes opened by their parent edges carry
     // the flag so pass-through rows can render those edges dashed.
