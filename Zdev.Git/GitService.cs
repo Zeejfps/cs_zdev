@@ -2572,12 +2572,16 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
             return ToOutcome(_runner.Run(repo.Path, new[] { "stash", "store", "-m", newMessage, sha }), "git stash store");
         });
 
-    public IReadOnlyList<WorktreeInfo> ListWorktrees(Repo primary)
-        => Read<IReadOnlyList<WorktreeInfo>>(primary, () =>
+    // A failed listing is reported, not returned empty: an empty list reads as "no worktrees", which
+    // a caller would act on as if git had said so.
+    public Fetched<IReadOnlyList<WorktreeInfo>> ListWorktrees(Repo primary)
+        => Read(primary, () =>
         {
             var result = RunGit(primary.Path, "worktree", "list", "--porcelain");
-            return result.Ok ? ParseWorktreePorcelain(result.Stdout) : [];
-        }, []);
+            return result.Ok
+                ? new Fetched<IReadOnlyList<WorktreeInfo>>.Ok(ParseWorktreePorcelain(result.Stdout))
+                : Fetched<IReadOnlyList<WorktreeInfo>>.Fail(result.FirstLineError("git worktree list"));
+        });
 
     // Porcelain format: blank-line-separated records, one field per line.
     //   worktree <abs-path>
@@ -2702,7 +2706,7 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
             if (string.IsNullOrWhiteSpace(worktreePath))
                 return new WorktreeRemoveOutcome.Failed("Worktree path is required.");
 
-            var wasRegistered = IsRegisteredWorktree(primary, worktreePath);
+            var wasRegistered = RegistrationOf(primary, worktreePath) == WorktreeRegistration.Registered;
 
             var args = new List<string> { "worktree", "remove" };
             if (force) args.Add("--force");
@@ -2711,8 +2715,8 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
 
             // Deleting the directory ourselves is only ever right for a worktree git has just
             // deregistered. A path git never had registered is not ours to remove, whatever the
-            // command failed with.
-            if (!result.Ok && (!wasRegistered || IsRegisteredWorktree(primary, worktreePath)))
+            // command failed with, and nor is one git can't currently be asked about.
+            if (!result.Ok && (!wasRegistered || RegistrationOf(primary, worktreePath) != WorktreeRegistration.NotRegistered))
                 return new WorktreeRemoveOutcome.Failed(result.BlockError("git worktree remove"));
 
             var leftovers = DirectoryTree.Delete(worktreePath);
@@ -2724,12 +2728,19 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
     // `git worktree list` prints forward slashes on Windows, and prints a path with every symlink on
     // it already followed, while the caller holds whatever the registry recorded — so compare the two
     // through RealPath rather than as strings.
-    private bool IsRegisteredWorktree(Repo primary, string worktreePath)
+    private WorktreeRegistration RegistrationOf(Repo primary, string worktreePath)
     {
+        if (ListWorktrees(primary) is not Fetched<IReadOnlyList<WorktreeInfo>>.Ok listed)
+            return WorktreeRegistration.Unknown;
         var wanted = RealPath.Of(worktreePath);
-        return ListWorktrees(primary).Any(w =>
-            string.Equals(RealPath.Of(w.Path), wanted, PathComparison));
+        return listed.Value.Any(w => string.Equals(RealPath.Of(w.Path), wanted, PathComparison))
+            ? WorktreeRegistration.Registered
+            : WorktreeRegistration.NotRegistered;
     }
+
+    // Whether git lists a worktree, or couldn't be asked: a failed listing must never pass for
+    // "not registered", since that is what lets RemoveWorktree delete the folder itself.
+    private enum WorktreeRegistration { Registered, NotRegistered, Unknown }
 
     private static readonly StringComparison PathComparison =
         OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;

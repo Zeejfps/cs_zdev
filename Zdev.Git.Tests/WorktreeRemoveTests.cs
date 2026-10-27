@@ -62,7 +62,7 @@ public sealed class WorktreeRemoveTests : IDisposable
     // compare equal through RealPath — on macOS the temp directory these tests run in is reached
     // through one.
     private bool IsRegistered(string path)
-        => _git.ListWorktrees(_repo).Any(w =>
+        => Assert.IsType<Fetched<IReadOnlyList<WorktreeInfo>>.Ok>(_git.ListWorktrees(_repo)).Value.Any(w =>
             string.Equals(RealPath.Of(w.Path), RealPath.Of(path), StringComparison.OrdinalIgnoreCase));
 
     // A junction whose target is gone. git follows junctions while deleting, so it empties one
