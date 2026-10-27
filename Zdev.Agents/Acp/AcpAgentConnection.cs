@@ -25,6 +25,21 @@ public abstract record AcpStart
     public sealed record Failed(string Reason) : AcpStart;
 }
 
+/// <summary>How starting an agent on a saved session went: the session is open again, the agent
+/// could not load it and a new session is open instead, or the agent did not start.</summary>
+public abstract record AcpLoad
+{
+    /// <summary>The saved session is open again. The history the agent replayed while loading it
+    /// reached the update handler before this was returned.</summary>
+    public sealed record Loaded(AcpAgentConnection Connection) : AcpLoad;
+
+    /// <summary>The agent does not load sessions, or refused to load this one, for
+    /// <paramref name="Reason"/>; a new session is open on <paramref name="Connection"/> instead.</summary>
+    public sealed record OpenedNew(AcpAgentConnection Connection, string Reason) : AcpLoad;
+
+    public sealed record Failed(string Reason) : AcpLoad;
+}
+
 /// <summary>
 /// One agent run over the Agent Client Protocol: the adapter process, its one session, and the
 /// write guard. Every permission request goes through <see cref="AcpPermissionPolicy"/> — reads,
@@ -37,6 +52,13 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     /// <summary>Whether the agent takes a file's text attached to a turn as context, rather than
     /// only prose.</summary>
     public bool EmbedsContext { get; private set; }
+
+    /// <summary>Whether the agent said, as it started, that it can load a saved session, so a later
+    /// <see cref="StartLoadingAsync"/> can open this one again.</summary>
+    public bool CanLoadSession { get; private set; }
+
+    /// <summary>The id of the open session, to load it again later.</summary>
+    public string SessionId => _sessionId ?? throw new InvalidOperationException("The session is not open.");
 
     private const int StderrLines = 40;
     private static readonly TimeSpan HandshakeTimeout = TimeSpan.FromSeconds(90);
@@ -97,8 +119,61 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         IServerEnvironment environment,
         CancellationToken ct)
     {
+        if (Launch(harness, workingDirectory, server, prompt, environment, out var notLaunched) is not { } connection)
+            return new AcpStart.Failed(notLaunched);
+
+        var failure = await connection.OpenForHarnessAsync(harness, workingDirectory, server, ct).ConfigureAwait(false);
+        if (failure is null) return new AcpStart.Started(connection);
+
+        await connection.DisposeAsync().ConfigureAwait(false);
+        return new AcpStart.Failed(connection.WithStderrTail(failure));
+    }
+
+    /// <summary>
+    /// Starts <paramref name="harness"/>'s adapter as <see cref="StartAsync"/> does, but opens the
+    /// saved session <paramref name="sessionId"/> with <c>session/load</c> instead of a new one. The
+    /// agent replays the session's history as <c>session/update</c> notifications while it loads, so
+    /// <paramref name="updated"/> is subscribed to <see cref="Updated"/> before the session opens: it
+    /// hears the history, then the live updates, in the order the agent sent them. An agent that does
+    /// not advertise <c>loadSession</c>, or refuses the load, gets a new session instead, which the
+    /// result tells apart.
+    /// </summary>
+    public static async Task<AcpLoad> StartLoadingAsync(
+        AcpHarness harness,
+        string workingDirectory,
+        string sessionId,
+        AcpMcpServer? server,
+        IAcpPermissionPrompt prompt,
+        Action<AcpSessionUpdate> updated,
+        IServerEnvironment environment,
+        CancellationToken ct)
+    {
+        if (Launch(harness, workingDirectory, server, prompt, environment, out var notLaunched) is not { } connection)
+            return new AcpLoad.Failed(notLaunched);
+
+        connection.Updated += updated;
+        var load = await connection.LoadForHarnessAsync(harness, workingDirectory, sessionId, server, ct).ConfigureAwait(false);
+        if (load is not AcpLoad.Failed failed) return load;
+
+        await connection.DisposeAsync().ConfigureAwait(false);
+        return new AcpLoad.Failed(connection.WithStderrTail(failed.Reason));
+    }
+
+    /// <summary>Starts the adapter's process and reads its stderr; null, with why, when it could not.</summary>
+    private static AcpAgentConnection? Launch(
+        AcpHarness harness,
+        string workingDirectory,
+        AcpMcpServer? server,
+        IAcpPermissionPrompt prompt,
+        IServerEnvironment environment,
+        out string failure)
+    {
+        failure = string.Empty;
         if (environment.ResolveCommand(harness.Command) is not { } executable)
-            return new AcpStart.Failed($"'{harness.Command}' was not found on PATH.");
+        {
+            failure = $"'{harness.Command}' was not found on PATH.";
+            return null;
+        }
 
         var start = new ProcessStartInfo(executable)
         {
@@ -123,7 +198,8 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         }
         catch (Exception e) when (e is Win32Exception or InvalidOperationException)
         {
-            return new AcpStart.Failed($"'{harness.Command}' could not be started: {e.Message}");
+            failure = $"'{harness.Command}' could not be started: {e.Message}";
+            return null;
         }
 
         var connection = new AcpAgentConnection(process.StandardOutput, process.StandardInput, process, prompt, server?.Name);
@@ -132,13 +208,13 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
             if (e.Data is { } line) connection.NoteStderr(line);
         };
         process.BeginErrorReadLine();
+        return connection;
+    }
 
-        var failure = await connection.OpenForHarnessAsync(harness, workingDirectory, server, ct).ConfigureAwait(false);
-        if (failure is null) return new AcpStart.Started(connection);
-
-        await connection.DisposeAsync().ConfigureAwait(false);
-        var tail = connection.StderrTail;
-        return new AcpStart.Failed(tail.Length == 0 ? failure : $"{failure}\n{tail}");
+    private string WithStderrTail(string failure)
+    {
+        var tail = StderrTail;
+        return tail.Length == 0 ? failure : $"{failure}\n{tail}";
     }
 
     /// <summary>
@@ -165,6 +241,30 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         return new AcpStart.Failed(failure);
     }
 
+    /// <summary>
+    /// Opens the saved session <paramref name="sessionId"/> with an agent the caller runs at the far
+    /// end of the streams, as <see cref="StartLoadingAsync"/> does with the process it starts, and as
+    /// <see cref="ConnectAsync"/> opens a new one: <paramref name="updated"/> hears the replayed
+    /// history and then the live updates, and an agent that can't load the session gets a new one.
+    /// </summary>
+    public static async Task<AcpLoad> ConnectLoadingAsync(
+        TextReader incoming,
+        TextWriter outgoing,
+        AcpHarness harness,
+        string workingDirectory,
+        string sessionId,
+        AcpMcpServer? server,
+        IAcpPermissionPrompt prompt,
+        Action<AcpSessionUpdate> updated,
+        CancellationToken ct)
+    {
+        var connection = Over(incoming, outgoing, prompt, server?.Name);
+        connection.Updated += updated;
+        var load = await connection.LoadForHarnessAsync(harness, workingDirectory, sessionId, server, ct).ConfigureAwait(false);
+        if (load is AcpLoad.Failed) await connection.DisposeAsync().ConfigureAwait(false);
+        return load;
+    }
+
     /// <summary>Opens the session in <paramref name="harness"/>'s asking mode and checks it offers the
     /// chat mode too. Answers why it could not, or null; disposes the connection when it throws.</summary>
     private async Task<string?> OpenForHarnessAsync(AcpHarness harness, string workingDirectory, AcpMcpServer? server, CancellationToken ct)
@@ -175,6 +275,27 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
             if (failure is null && harness.ChatMode is { } chatMode && !Offers(chatMode))
                 failure = $"The agent offers no '{chatMode}' mode.";
             return failure;
+        }
+        catch
+        {
+            await DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    /// <summary>Loads <paramref name="sessionId"/>, or opens a new session when the agent can't, in
+    /// <paramref name="harness"/>'s asking mode, and checks it offers the chat mode too. Disposes the
+    /// connection when it throws.</summary>
+    private async Task<AcpLoad> LoadForHarnessAsync(AcpHarness harness, string workingDirectory, string sessionId, AcpMcpServer? server,
+        CancellationToken ct)
+    {
+        try
+        {
+            var load = await OpenLoadingAsync(workingDirectory, sessionId, server, harness.AskingMode, harness.SessionMetaJson, ct)
+                .ConfigureAwait(false);
+            if (load is not AcpLoad.Failed && harness.ChatMode is { } chatMode && !Offers(chatMode))
+                return new AcpLoad.Failed($"The agent offers no '{chatMode}' mode.");
+            return load;
         }
         catch
         {
@@ -197,52 +318,126 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         timeout.CancelAfter(HandshakeTimeout);
         try
         {
-            var initialized = await _rpc.RequestAsync("initialize", new JsonObject
-            {
-                ["protocolVersion"] = 1,
-                ["clientCapabilities"] = new JsonObject
-                {
-                    ["fs"] = new JsonObject { ["readTextFile"] = false, ["writeTextFile"] = false },
-                    ["terminal"] = false,
-                },
-                ["clientInfo"] = new JsonObject { ["name"] = "DiffDino", ["version"] = "1" },
-            }, timeout.Token).ConfigureAwait(false);
-            EmbedsContext = initialized?["agentCapabilities"]?["promptCapabilities"]?["embeddedContext"] is JsonValue embeds
-                            && embeds.TryGetValue<bool>(out var embedded) && embedded;
+            await InitializeAsync(timeout.Token).ConfigureAwait(false);
+            return await NewSessionAsync(workingDirectory, server, sessionMetaJson, timeout.Token).ConfigureAwait(false)
+                   ?? await EnterAskingModeAsync(askingMode, timeout.Token).ConfigureAwait(false);
+        }
+        catch (Exception e) when (DescribeStartFailure(e, ct) is { } failure)
+        {
+            return failure;
+        }
+    }
 
-            var session = await _rpc.RequestAsync("session/new", new JsonObject
+    /// <summary>Handshakes, loads <paramref name="sessionId"/> or, when the agent can't, opens a new
+    /// session, and puts it in <paramref name="askingMode"/>.</summary>
+    internal async Task<AcpLoad> OpenLoadingAsync(
+        string workingDirectory, string sessionId, AcpMcpServer? server, string askingMode, string? sessionMetaJson, CancellationToken ct)
+    {
+        _rpc.Start();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(HandshakeTimeout);
+        try
+        {
+            await InitializeAsync(timeout.Token).ConfigureAwait(false);
+            var notLoaded = await LoadSessionAsync(workingDirectory, sessionId, server, sessionMetaJson, timeout.Token).ConfigureAwait(false);
+            if (notLoaded is not null
+                && await NewSessionAsync(workingDirectory, server, sessionMetaJson, timeout.Token).ConfigureAwait(false) is { } noSession)
+                return new AcpLoad.Failed(noSession);
+            if (await EnterAskingModeAsync(askingMode, timeout.Token).ConfigureAwait(false) is { } unguarded)
+                return new AcpLoad.Failed(unguarded);
+            return notLoaded is null ? new AcpLoad.Loaded(this) : new AcpLoad.OpenedNew(this, notLoaded);
+        }
+        catch (Exception e) when (DescribeStartFailure(e, ct) is { } failure)
+        {
+            return new AcpLoad.Failed(failure);
+        }
+    }
+
+    /// <summary>Why a start that threw <paramref name="e"/> failed, or null for an exception a start
+    /// does not expect, which is left to propagate.</summary>
+    private static string? DescribeStartFailure(Exception e, CancellationToken ct) => e switch
+    {
+        AcpRpcException rpc => $"The agent refused to start: {rpc.Message}",
+        AcpClosedException => "The agent exited while starting.",
+        OperationCanceledException when !ct.IsCancellationRequested => "The agent did not answer in time.",
+        _ => null,
+    };
+
+    private async Task InitializeAsync(CancellationToken ct)
+    {
+        var initialized = await _rpc.RequestAsync("initialize", new JsonObject
+        {
+            ["protocolVersion"] = 1,
+            ["clientCapabilities"] = new JsonObject
+            {
+                ["fs"] = new JsonObject { ["readTextFile"] = false, ["writeTextFile"] = false },
+                ["terminal"] = false,
+            },
+            ["clientInfo"] = new JsonObject { ["name"] = "DiffDino", ["version"] = "1" },
+        }, ct).ConfigureAwait(false);
+        var capabilities = initialized?["agentCapabilities"];
+        EmbedsContext = capabilities?["promptCapabilities"]?["embeddedContext"] is JsonValue embeds
+                        && embeds.TryGetValue<bool>(out var embedded) && embedded;
+        CanLoadSession = capabilities?["loadSession"] is JsonValue loads && loads.TryGetValue<bool>(out var loadable) && loadable;
+    }
+
+    /// <summary>Opens a new session. Answers why it could not, or null.</summary>
+    private async Task<string?> NewSessionAsync(string workingDirectory, AcpMcpServer? server, string? sessionMetaJson, CancellationToken ct)
+    {
+        var session = await _rpc.RequestAsync("session/new", new JsonObject
+        {
+            ["_meta"] = sessionMetaJson is null ? null : JsonNode.Parse(sessionMetaJson),
+            ["cwd"] = workingDirectory,
+            ["mcpServers"] = McpServersJson(server),
+        }, ct).ConfigureAwait(false);
+
+        if (session?["sessionId"] is not JsonValue id || !id.TryGetValue<string>(out var sessionId))
+            return "The agent opened no session.";
+        _sessionId = sessionId;
+        _modes = OfferedModes(session);
+        return null;
+    }
+
+    /// <summary>Loads the saved session <paramref name="sessionId"/>, which the agent replays as
+    /// <c>session/update</c> notifications before it answers. Answers why it was not loaded, or null:
+    /// the agent advertised no <c>loadSession</c>, or refused this one.</summary>
+    private async Task<string?> LoadSessionAsync(
+        string workingDirectory, string sessionId, AcpMcpServer? server, string? sessionMetaJson, CancellationToken ct)
+    {
+        if (!CanLoadSession) return "The agent does not load saved sessions.";
+        JsonNode? loaded;
+        try
+        {
+            loaded = await _rpc.RequestAsync("session/load", new JsonObject
             {
                 ["_meta"] = sessionMetaJson is null ? null : JsonNode.Parse(sessionMetaJson),
+                ["sessionId"] = sessionId,
                 ["cwd"] = workingDirectory,
                 ["mcpServers"] = McpServersJson(server),
-            }, timeout.Token).ConfigureAwait(false);
-
-            if (session?["sessionId"] is not JsonValue id || !id.TryGetValue<string>(out var sessionId))
-                return "The agent opened no session.";
-            _sessionId = sessionId;
-
-            _modes = OfferedModes(session);
-            if (!Offers(askingMode))
-                return $"The agent offers no '{askingMode}' mode, so its writes can't be refused.";
-            await _rpc.RequestAsync("session/set_mode", new JsonObject
-            {
-                ["sessionId"] = sessionId,
-                ["modeId"] = askingMode,
-            }, timeout.Token).ConfigureAwait(false);
-            return null;
+            }, ct).ConfigureAwait(false);
         }
         catch (AcpRpcException e)
         {
-            return $"The agent refused to start: {e.Message}";
+            return $"The agent could not load the session: {e.Message}";
         }
-        catch (AcpClosedException)
+
+        _sessionId = sessionId;
+        _modes = OfferedModes(loaded);
+        return null;
+    }
+
+    /// <summary>Puts the open session in <paramref name="askingMode"/>, which it must offer. Answers
+    /// why it could not, or null.</summary>
+    private async Task<string?> EnterAskingModeAsync(string askingMode, CancellationToken ct)
+    {
+        if (!Offers(askingMode))
+            return $"The agent offers no '{askingMode}' mode, so its writes can't be refused.";
+        await _rpc.RequestAsync("session/set_mode", new JsonObject
         {
-            return "The agent exited while starting.";
-        }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return "The agent did not answer in time.";
-        }
+            ["sessionId"] = SessionId,
+            ["modeId"] = askingMode,
+        }, ct).ConfigureAwait(false);
+        return null;
     }
 
     private static JsonArray McpServersJson(AcpMcpServer? server)
@@ -257,10 +452,10 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         });
     }
 
-    private static HashSet<string> OfferedModes(JsonNode session)
+    private static HashSet<string> OfferedModes(JsonNode? session)
     {
         var offered = new HashSet<string>(StringComparer.Ordinal);
-        if (session["modes"]?["availableModes"] is not JsonArray modes) return offered;
+        if (session?["modes"]?["availableModes"] is not JsonArray modes) return offered;
         foreach (var mode in modes)
             if (mode?["id"] is JsonValue id && id.TryGetValue<string>(out var value))
                 offered.Add(value);

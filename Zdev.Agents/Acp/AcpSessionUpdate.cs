@@ -17,6 +17,9 @@ public abstract record AcpSessionUpdate
     /// <summary>A fragment of the agent's reply to the user.</summary>
     public sealed record MessageChunk(string Text) : AcpSessionUpdate;
 
+    /// <summary>A fragment of a message the user sent, as an agent replays it while it loads a session.</summary>
+    public sealed record UserMessageChunk(string Text) : AcpSessionUpdate;
+
     /// <summary>A fragment of the agent's reasoning.</summary>
     public sealed record ThoughtChunk(string Text) : AcpSessionUpdate;
 
@@ -36,6 +39,8 @@ public abstract record AcpSessionUpdate
         {
             case "agent_message_chunk":
                 return new MessageChunk(ContentText(body["content"]));
+            case "user_message_chunk":
+                return new UserMessageChunk(ContentText(body["content"]));
             case "agent_thought_chunk":
                 return new ThoughtChunk(ContentText(body["content"]));
             case "tool_call":
