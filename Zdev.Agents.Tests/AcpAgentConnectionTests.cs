@@ -2,6 +2,7 @@ using System.IO.Pipes;
 using System.Text;
 using System.Text.Json.Nodes;
 using Zdev.Agents.Acp;
+using Zdev.Common;
 using Xunit;
 
 namespace Zdev.Agents.Tests;
@@ -218,6 +219,108 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
         await _connection.Closed.WaitAsync(Deadline);
     }
 
+    [Fact]
+    public async Task Open_ReadsWhetherTheAgentLoadsSessions_AndNamesTheNewSession()
+    {
+        _agent.Capabilities = """{"loadSession":true}""";
+
+        Assert.Null(await _connection.OpenAsync("C:/repo", Server, "default", null, CancellationToken.None).WaitAsync(Deadline));
+
+        Assert.True(_connection.CanLoadSession);
+        Assert.Equal("s1", _connection.SessionId);
+    }
+
+    [Fact]
+    public async Task ConnectLoading_ReplaysTheSavedHistoryThroughUpdated_BeforeTheLiveTurns()
+    {
+        _agent.Capabilities = """{"loadSession":true}""";
+        _agent.OnLoad = async agent =>
+        {
+            await agent.Update("""{"sessionUpdate":"user_message_chunk","content":{"type":"text","text":"Fix it."}}""");
+            await agent.Update("""{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Fixed."}}""");
+        };
+        _agent.OnPrompt = async agent =>
+        {
+            await agent.Update("""{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Done."}}""");
+            return "end_turn";
+        };
+        var updates = new List<AcpSessionUpdate>();
+
+        var load = await AcpAgentConnection.ConnectLoadingAsync(_agent.ClientReads, _agent.ClientWrites, AcpHarness.ClaudeCode, "C:/repo",
+            "saved-1", Server, _prompt, u => { lock (updates) updates.Add(u); }, CancellationToken.None).WaitAsync(Deadline);
+        List<AcpSessionUpdate> history;
+        lock (updates) history = updates.ToList();
+        await using var connection = Assert.IsType<AcpLoad.Loaded>(load).Connection;
+        await connection.PromptAsync("And now?", CancellationToken.None).WaitAsync(Deadline);
+
+        Assert.Equal("saved-1", connection.SessionId);
+        Assert.Equal(["initialize", "session/load", "session/set_mode", "session/prompt"], _agent.Methods);
+        var loaded = _agent.Params("session/load")!;
+        Assert.Equal("saved-1", loaded["sessionId"]!.GetValue<string>());
+        Assert.Equal("C:/repo", loaded["cwd"]!.GetValue<string>());
+        Assert.Equal(Server.Url.ToString(), loaded["mcpServers"]![0]!["url"]!.GetValue<string>());
+        Assert.Equal("default", _agent.Params("session/set_mode")!["modeId"]!.GetValue<string>());
+        Assert.Equal<AcpSessionUpdate>([new AcpSessionUpdate.UserMessageChunk("Fix it."), new AcpSessionUpdate.MessageChunk("Fixed.")], history);
+        Assert.Equal(new AcpSessionUpdate.MessageChunk("Done."), updates[^1]);
+    }
+
+    [Fact]
+    public async Task ConnectLoading_AnAgentThatDoesNotLoadSessions_GetsANewSessionAndSaysWhy()
+    {
+        var load = await AcpAgentConnection.ConnectLoadingAsync(_agent.ClientReads, _agent.ClientWrites, AcpHarness.ClaudeCode, "C:/repo",
+            "saved-1", null, _prompt, _ => { }, CancellationToken.None).WaitAsync(Deadline);
+
+        var opened = Assert.IsType<AcpLoad.OpenedNew>(load);
+        await using var connection = opened.Connection;
+        Assert.Contains("does not load", opened.Reason);
+        Assert.False(connection.CanLoadSession);
+        Assert.Equal("s1", connection.SessionId);
+        Assert.Equal(["initialize", "session/new", "session/set_mode"], _agent.Methods);
+    }
+
+    [Fact]
+    public async Task ConnectLoading_ALoadTheAgentRefuses_GetsANewSessionAndSaysWhy()
+    {
+        _agent.Capabilities = """{"loadSession":true}""";
+        _agent.LoadError = "Session saved-1 not found.";
+
+        var load = await AcpAgentConnection.ConnectLoadingAsync(_agent.ClientReads, _agent.ClientWrites, AcpHarness.ClaudeCode, "C:/repo",
+            "saved-1", null, _prompt, _ => { }, CancellationToken.None).WaitAsync(Deadline);
+
+        var opened = Assert.IsType<AcpLoad.OpenedNew>(load);
+        await using var connection = opened.Connection;
+        Assert.Contains("Session saved-1 not found.", opened.Reason);
+        Assert.Equal("s1", connection.SessionId);
+        Assert.Equal(["initialize", "session/load", "session/new", "session/set_mode"], _agent.Methods);
+    }
+
+    [Fact]
+    public async Task ConnectLoading_AnAgentThatExitsWhileLoading_Fails()
+    {
+        _agent.Capabilities = """{"loadSession":true}""";
+        _agent.OnLoad = agent =>
+        {
+            agent.Exit();
+            return Task.CompletedTask;
+        };
+
+        var load = await AcpAgentConnection.ConnectLoadingAsync(_agent.ClientReads, _agent.ClientWrites, AcpHarness.ClaudeCode, "C:/repo",
+            "saved-1", null, _prompt, _ => { }, CancellationToken.None).WaitAsync(Deadline);
+
+        Assert.Equal("The agent exited while starting.", Assert.IsType<AcpLoad.Failed>(load).Reason);
+    }
+
+    [Fact]
+    public async Task StartLoading_ACommandNotOnPath_Fails()
+    {
+        var nowhere = new MapServerEnvironment(new Dictionary<string, string>());
+
+        var load = await AcpAgentConnection.StartLoadingAsync(AcpHarness.ClaudeCode, "C:/repo", "saved-1", null, _prompt, _ => { }, nowhere,
+            CancellationToken.None).WaitAsync(Deadline);
+
+        Assert.Equal("'npx' was not found on PATH.", Assert.IsType<AcpLoad.Failed>(load).Reason);
+    }
+
     private sealed class RecordingPrompt : IAcpPermissionPrompt
     {
         public List<string> Asked { get; } = new();
@@ -287,6 +390,12 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
         /// <summary>The <c>agentCapabilities</c> initialize answers with.</summary>
         public string Capabilities { get; set; } = "{}";
 
+        /// <summary>Replays a saved session's history while <c>session/load</c> waits for its answer.</summary>
+        public Func<ScriptedAgent, Task>? OnLoad { get; set; }
+
+        /// <summary>When set, <c>session/load</c> is answered with this error.</summary>
+        public string? LoadError { get; set; }
+
         public void Exit() => _toClient.Dispose();
 
         private async Task Loop()
@@ -318,17 +427,32 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
             }
         }
 
+        private const string Modes = """{"currentModeId":"auto","availableModes":[{"id":"default","name":"Manual"},{"id":"auto","name":"Auto"}]}""";
+
         private async Task Answer(JsonNode id, string method)
         {
+            if (method == "session/load" && LoadError is { } error)
+            {
+                await Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["error"] = new JsonObject { ["code"] = -32002, ["message"] = error } });
+                return;
+            }
+
             JsonNode? result = method switch
             {
                 "initialize" => JsonNode.Parse($$"""{"protocolVersion":1,"agentCapabilities":{{Capabilities}},"authMethods":[]}"""),
-                "session/new" => JsonNode.Parse("""{"sessionId":"s1","modes":{"currentModeId":"auto","availableModes":[{"id":"default","name":"Manual"},{"id":"auto","name":"Auto"}]}}"""),
+                "session/new" => JsonNode.Parse($$"""{"sessionId":"s1","modes":{{Modes}}}"""),
+                "session/load" => await Load(),
                 "session/set_mode" => new JsonObject(),
                 "session/prompt" => new JsonObject { ["stopReason"] = OnPrompt is { } run ? await run(this) : "end_turn" },
                 _ => null,
             };
             await Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["result"] = result });
+        }
+
+        private async Task<JsonNode?> Load()
+        {
+            if (OnLoad is { } replay) await replay(this);
+            return JsonNode.Parse($$"""{"modes":{{Modes}}}""");
         }
 
         private async Task Send(JsonObject message)
