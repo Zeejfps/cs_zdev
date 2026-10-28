@@ -2725,6 +2725,78 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
                 : new WorktreeRemoveOutcome.RemovedWithLeftovers(leftovers.Path, leftovers.Reason);
         }, static m => new WorktreeRemoveOutcome.Failed(m));
 
+    // A worktree kept to be used again, put back to what `git worktree add` and `git submodule
+    // update --init --recursive` would make, without cloning its submodules again: their
+    // repositories live under the worktree's own gitdir, which a reset leaves alone. The order
+    // matters. An operation in progress is given up first, since its sentinels outlive a checkout
+    // and would leave the worktree's next user mid-rebase. The forced checkout throws away tracked
+    // changes and an unmerged index. `clean -ffdx` takes everything untracked or ignored, the
+    // double -f taking submodules the new commit no longer has. The submodules go last, once the
+    // superproject records which commits they belong on.
+    public WorktreeResetOutcome ResetWorktree(Repo primary, WorktreeResetRequest request)
+        => RunLocked<WorktreeResetOutcome>(primary, GitResource.LocalState, () =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Path))
+                return new WorktreeResetOutcome.Failed("Worktree path is required.");
+            if (string.IsNullOrWhiteSpace(request.StartPoint))
+                return new WorktreeResetOutcome.Failed("Start point is required.");
+
+            var worktree = primary with { Path = WorktreeFullPath(primary, request.Path) };
+            if (!IsGitRepo(worktree.Path))
+                return new WorktreeResetOutcome.Failed($"{worktree.Path} is not a worktree.");
+            var unfinished = QuitOperation(worktree);
+            if (unfinished != null) return new WorktreeResetOutcome.Failed(unfinished);
+
+            var checkout = new List<string> { "checkout", "--force", "--no-recurse-submodules" };
+            if (string.IsNullOrWhiteSpace(request.NewBranchName))
+                checkout.Add("--detach");
+            else
+            {
+                checkout.Add("-b");
+                checkout.Add(request.NewBranchName!);
+            }
+            checkout.Add(request.StartPoint);
+            var checkedOut = _runner.Run(worktree.Path, checkout);
+            if (!checkedOut.Ok) return new WorktreeResetOutcome.Failed(checkedOut.BlockError("git checkout"));
+
+            var warnings = new List<string>();
+            NoteFailure(warnings, Mutate(worktree.Path, "clean", "-ffdxq"));
+            if (request.UpdateSubmodules)
+                NoteFailure(warnings, Mutate(worktree.Path, "submodule", "update", "--init", "--recursive", "--force"));
+            NoteFailure(warnings, Mutate(worktree.Path, "submodule", "foreach", "--quiet", "--recursive",
+                "git reset -q --hard && git clean -ffdxq"));
+            return warnings.Count == 0
+                ? WorktreeResetOutcome.Ok
+                : new WorktreeResetOutcome.Reset(string.Join("\n", warnings));
+        }, static m => new WorktreeResetOutcome.Failed(m));
+
+    private static void NoteFailure(List<string> warnings, GitOutcome outcome)
+    {
+        if (outcome.FailureMessage != null) warnings.Add(outcome.FailureMessage);
+    }
+
+    // Gives up what a worktree about to be reset is in the middle of, keeping nothing of it, since
+    // the reset throws its working tree away anyway. An unmerged index with no operation around it
+    // is left to the forced checkout, which clears it. Null once nothing is in progress.
+    private string? QuitOperation(Repo worktree)
+    {
+        var state = GetOperationState(worktree);
+        switch (state)
+        {
+            case RepoOperationState.None:
+            case RepoOperationState.UnmergedPaths:
+                return null;
+            case RepoOperationState.Merge:
+                return ForceClearSentinels(worktree, state);
+            case RepoOperationState.Bisect:
+                return Mutate(worktree.Path, "bisect", "reset").FailureMessage;
+            default:
+                var args = GetForceQuitArgs(state);
+                if (args == null) return $"Can't give up {DescribeState(state)}.";
+                return Mutate(worktree.Path, args).FailureMessage;
+        }
+    }
+
     // `git worktree list` prints forward slashes on Windows, and prints a path with every symlink on
     // it already followed, while the caller holds whatever the registry recorded — so compare the two
     // through RealPath rather than as strings.

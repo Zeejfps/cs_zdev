@@ -61,6 +61,24 @@ public abstract record WorktreeAddOutcome : IOutcome<WorktreeAddOutcome>
     public sealed record Failed(string Message) : WorktreeAddOutcome;
 }
 
+// Resetting a worktree is a checkout followed by cleaning it and its submodules. Only the
+// checkout refusing leaves the worktree on what it had; past it the worktree is on the new start
+// point, so a later step failing is a warning on the success case, as for WorktreeAddOutcome.
+public abstract record WorktreeResetOutcome : IOutcome<WorktreeResetOutcome>
+{
+    private WorktreeResetOutcome() { }
+
+    public static readonly WorktreeResetOutcome Ok = new Reset();
+
+    public static WorktreeResetOutcome Fail(string message) => new Failed(message);
+
+    public string? FailureMessage => (this as Failed)?.Message;
+
+    public sealed record Reset(string? Warning = null) : WorktreeResetOutcome;
+
+    public sealed record Failed(string Message) : WorktreeResetOutcome;
+}
+
 // Operations that can land in a conflicted-but-in-progress state the operation banner
 // takes over from: merge, rebase, cherry-pick, revert, stash apply, submodule update.
 public abstract record MergeLikeOutcome : IOutcome<MergeLikeOutcome>
