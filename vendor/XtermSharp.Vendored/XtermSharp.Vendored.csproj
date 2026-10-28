@@ -11,19 +11,20 @@
         is listed in ..\XtermSharp\PATCHES.md, so a diff against a fresh clone stays legible.
         Gaps not yet patched are recorded in docs/xtermsharp-known-gaps.md.
 
-        netstandard2.0 is deliberate. Compiled as net10.0 these sources do not build: NStack.Core
-        declares its own System.Rune, unambiguous on netstandard2.0 but colliding with
-        System.Text.Rune from .NET Core 3.0 onwards -
+        net10.0, so the trimmer and the AOT analyzers see these sources like every other project
+        in the app; a netstandard2.0 library fails a trimmed publish with NETSDK1124. NStack.Core
+        declares its own System.Rune, which on .NET Core 3.0 onwards collides with System.Text.Rune
+        wherever the bare name is used -
 
             XtermSharp/SelectionService.cs:175             Rune.IsLetterOrDigit (cd.Rune)
-            XtermSharp/InputHandlers/InputHandler.cs:1224  Rune.DecodeRune (x)
+            XtermSharp/InputHandlers/InputHandler.cs:1312  Rune.DecodeRune (x)
 
-        A netstandard2.0 assembly is referenceable from net10.0, so the seam and the tests are
-        unaffected.
+        These sources mean NStack's, so the Using item below aliases the name to it rather than
+        patching the fork.
     -->
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>XtermSharp</AssemblyName>
         <RootNamespace>XtermSharp</RootNamespace>
         <Nullable>disable</Nullable>
@@ -36,6 +37,7 @@
 
     <ItemGroup>
         <Compile Include="..\XtermSharp\**\*.cs" />
+        <Using Include="System.Rune" Alias="Rune" />
     </ItemGroup>
 
     <ItemGroup>
