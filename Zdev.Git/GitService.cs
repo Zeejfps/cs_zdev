@@ -2727,12 +2727,19 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
 
     // A worktree kept to be used again, put back to what `git worktree add` and `git submodule
     // update --init --recursive` would make, without cloning its submodules again: their
-    // repositories live under the worktree's own gitdir, which a reset leaves alone. The order
-    // matters. An operation in progress is given up first, since its sentinels outlive a checkout
-    // and would leave the worktree's next user mid-rebase. The forced checkout throws away tracked
-    // changes and an unmerged index. `clean -ffdx` takes everything untracked or ignored, the
+    // repositories live under the worktree's own gitdir, which a reset leaves alone.
+    //
+    // It throws away everything in the tree, so it only ever touches a linked worktree of `primary`
+    // that git lists, never the main checkout or some other repository, and it holds the lock of
+    // the worktree itself as well as the primary's, since locks are taken per working tree. What
+    // could refuse the checkout is asked first, so a refusal leaves the worktree as it was,
+    // operation in progress and all.
+    //
+    // Then the order matters. An operation in progress is given up, since its sentinels outlive a
+    // checkout and would leave the worktree's next user mid-rebase. The forced checkout throws away
+    // tracked changes and an unmerged index. `clean -ffdx` takes everything untracked or ignored, the
     // double -f taking submodules the new commit no longer has. The submodules go last, once the
-    // superproject records which commits they belong on.
+    // superproject records which commits they belong on: see ResetSubmodulesCommand.
     public WorktreeResetOutcome ResetWorktree(Repo primary, WorktreeResetRequest request)
         => RunLocked<WorktreeResetOutcome>(primary, GitResource.LocalState, () =>
         {
@@ -2742,33 +2749,86 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
                 return new WorktreeResetOutcome.Failed("Start point is required.");
 
             var worktree = primary with { Path = WorktreeFullPath(primary, request.Path) };
-            if (!IsGitRepo(worktree.Path))
-                return new WorktreeResetOutcome.Failed($"{worktree.Path} is not a worktree.");
+            var notOurs = RefuseForeignWorktree(primary, worktree.Path);
+            if (notOurs != null) return new WorktreeResetOutcome.Failed(notOurs);
+            using var _ = _locks.Acquire(GitResource.LocalState, worktree.Path);
+            var start = ResolveCommit(worktree.Path, request.StartPoint);
+            if (start == null) return new WorktreeResetOutcome.Failed($"'{request.StartPoint}' names no commit.");
+            if (!string.IsNullOrWhiteSpace(request.NewBranchName) && BranchExists(worktree.Path, request.NewBranchName!))
+                return new WorktreeResetOutcome.Failed($"A branch named '{request.NewBranchName}' already exists.");
             var unfinished = QuitOperation(worktree);
             if (unfinished != null) return new WorktreeResetOutcome.Failed(unfinished);
 
-            var checkout = new List<string> { "checkout", "--force", "--no-recurse-submodules" };
-            if (string.IsNullOrWhiteSpace(request.NewBranchName))
-                checkout.Add("--detach");
-            else
-            {
-                checkout.Add("-b");
-                checkout.Add(request.NewBranchName!);
-            }
-            checkout.Add(request.StartPoint);
-            var checkedOut = _runner.Run(worktree.Path, checkout);
-            if (!checkedOut.Ok) return new WorktreeResetOutcome.Failed(checkedOut.BlockError("git checkout"));
-
             var warnings = new List<string>();
+            var checkedOut = _runner.Run(worktree.Path, CheckoutArgs(request));
+            if (!checkedOut.Ok)
+            {
+                // A post-checkout hook failing makes git exit non-zero over a checkout it finished.
+                if (!IsCheckedOut(worktree.Path, request.NewBranchName, start))
+                    return new WorktreeResetOutcome.Failed(checkedOut.BlockError("git checkout"));
+                warnings.Add(checkedOut.BlockError("git checkout"));
+            }
+
             NoteFailure(warnings, Mutate(worktree.Path, "clean", "-ffdxq"));
+            NoteFailure(warnings, Mutate(worktree.Path, "submodule", "foreach", "--quiet", "--recursive", ResetSubmodulesCommand));
             if (request.UpdateSubmodules)
-                NoteFailure(warnings, Mutate(worktree.Path, "submodule", "update", "--init", "--recursive", "--force"));
-            NoteFailure(warnings, Mutate(worktree.Path, "submodule", "foreach", "--quiet", "--recursive",
-                "git reset -q --hard && git clean -ffdxq"));
+                NoteFailure(warnings, Mutate(worktree.Path, "submodule", "update", "--init", "--recursive", "--force", "--checkout"));
             return warnings.Count == 0
                 ? WorktreeResetOutcome.Ok
                 : new WorktreeResetOutcome.Reset(string.Join("\n", warnings));
         }, static m => new WorktreeResetOutcome.Failed(m));
+
+    // Run in each submodule the reset keeps, outermost first, before they are checked out: what a
+    // submodule was in the middle of is dropped by deleting its sentinels, as ForceClearSentinels
+    // does, since git's --quit verbs would cost a process each; it is pointed at the URL its
+    // superproject now gives it, which is the one a fresh clone would come from, so a submodule that
+    // moved is fetched from where it lives now; and it is emptied, so the forced update can't
+    // conflict with what it held. `$toplevel` and `$name` are git's, naming the superproject and the
+    // submodule. The superproject's URL is read rather than written, since its config is shared by
+    // every worktree of the repository.
+    private const string ResetSubmodulesCommand =
+        "gitdir=$(git rev-parse --git-dir) && "
+        + "rm -rf \"$gitdir/rebase-merge\" \"$gitdir/rebase-apply\" \"$gitdir/sequencer\" \"$gitdir\"/BISECT_* "
+        + "\"$gitdir/MERGE_HEAD\" \"$gitdir/MERGE_MSG\" \"$gitdir/MERGE_MODE\" \"$gitdir/AUTO_MERGE\" "
+        + "\"$gitdir/CHERRY_PICK_HEAD\" \"$gitdir/REVERT_HEAD\" && "
+        + "{ url=$(git -C \"$toplevel\" config --get \"submodule.$name.url\") && git remote set-url origin \"$url\" || true; } && "
+        + "git reset -q --hard && git clean -ffdxq";
+
+    // Null when `path` is a linked worktree git lists for `primary`, else why it may not be reset.
+    private string? RefuseForeignWorktree(Repo primary, string path)
+    {
+        if (string.Equals(RealPath.Of(path), RealPath.Of(primary.Path), PathComparison))
+            return $"{path} is the repository's main checkout, not a worktree of it.";
+        return RegistrationOf(primary, path) == WorktreeRegistration.Registered
+            ? null
+            : $"{path} is not a worktree of {primary.Path}.";
+    }
+
+    private bool BranchExists(string path, string branch)
+        => _runner.Run(path, new[] { "rev-parse", "--verify", "--quiet", "refs/heads/" + branch }).Ok;
+
+    private static List<string> CheckoutArgs(WorktreeResetRequest request)
+    {
+        var args = new List<string> { "checkout", "--force", "--no-recurse-submodules" };
+        if (string.IsNullOrWhiteSpace(request.NewBranchName))
+            args.Add("--detach");
+        else
+        {
+            args.Add("-b");
+            args.Add(request.NewBranchName!);
+        }
+        args.Add(request.StartPoint);
+        return args;
+    }
+
+    // Whether the worktree is where the checkout was to put it: at `commit`, on `branch` when there
+    // is one to be on.
+    private bool IsCheckedOut(string worktreePath, string? branch, string commit)
+    {
+        if (ResolveCommit(worktreePath, "HEAD") != commit) return false;
+        if (string.IsNullOrWhiteSpace(branch)) return true;
+        return ProbeGit(worktreePath, "symbolic-ref", "--quiet", "--short", "HEAD").Trim() == branch;
+    }
 
     private static void NoteFailure(List<string> warnings, GitOutcome outcome)
     {

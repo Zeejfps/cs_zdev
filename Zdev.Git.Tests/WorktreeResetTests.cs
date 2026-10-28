@@ -150,5 +150,103 @@ public sealed class WorktreeResetTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_worktree, "untracked.txt")));
     }
 
+    [Fact]
+    public void ABranchThatExistsAlreadyIsRefusedBeforeAMergeInProgressIsGivenUp()
+    {
+        File.WriteAllText(Path.Combine(_worktree, "untracked.txt"), "kept");
+        var head = Git(_worktree, "rev-parse", "HEAD").Trim();
+        File.WriteAllText(Path.Combine(GitDir(_worktree), "MERGE_HEAD"), head + "\n");
+        Git(_repoPath, "branch", "taken");
+
+        var outcome = _git.ResetWorktree(_repo, new WorktreeResetRequest(_worktree, "HEAD", "taken", UpdateSubmodules: true));
+
+        Assert.IsType<WorktreeResetOutcome.Failed>(outcome);
+        Assert.Equal(RepoOperationState.Merge, _git.GetOperationState(_repo with { Path = _worktree }));
+        Assert.True(File.Exists(Path.Combine(_worktree, "untracked.txt")));
+    }
+
+    [Fact]
+    public void RefusesTheMainCheckoutAndAnotherRepositoryAndLeavesThemAlone()
+    {
+        File.WriteAllText(Path.Combine(_repoPath, "untracked.txt"), "mine");
+        var other = Path.Combine(_root, "other");
+        TestGit.Init(other);
+        Git(other, "commit", "--allow-empty", "-m", "other");
+        File.WriteAllText(Path.Combine(other, "untracked.txt"), "theirs");
+
+        var main = _git.ResetWorktree(_repo, new WorktreeResetRequest(_repoPath, "HEAD", null, UpdateSubmodules: false));
+        var foreign = _git.ResetWorktree(_repo, new WorktreeResetRequest(other, "HEAD", null, UpdateSubmodules: false));
+
+        Assert.IsType<WorktreeResetOutcome.Failed>(main);
+        Assert.IsType<WorktreeResetOutcome.Failed>(foreign);
+        Assert.True(File.Exists(Path.Combine(_repoPath, "untracked.txt")));
+        Assert.True(File.Exists(Path.Combine(other, "untracked.txt")));
+    }
+
+    [Fact]
+    public void GivesUpWhatASubmoduleIsInTheMiddleOf()
+    {
+        var sub = Path.Combine(_worktree, "sub");
+        var subHead = Git(sub, "rev-parse", "HEAD").Trim();
+        File.WriteAllText(Path.Combine(GitDir(sub), "MERGE_HEAD"), subHead + "\n");
+        Directory.CreateDirectory(Path.Combine(GitDir(sub), "rebase-merge"));
+        Assert.NotEqual(RepoOperationState.None, _git.GetOperationState(_repo with { Path = sub }));
+
+        var outcome = _git.ResetWorktree(_repo, new WorktreeResetRequest(_worktree, "HEAD", "second", UpdateSubmodules: true));
+
+        Assert.Equal(WorktreeResetOutcome.Ok, outcome);
+        Assert.Equal(RepoOperationState.None, _git.GetOperationState(_repo with { Path = sub }));
+    }
+
+    [Fact]
+    public void ChecksOutTheRecordedSubmoduleCommitWhateverUpdateStrategyIsConfigured()
+    {
+        File.WriteAllText(Path.Combine(_subPath, "sub.txt"), "later");
+        Git(_subPath, "commit", "-am", "later");
+        Git(Path.Combine(_repoPath, "sub"), "pull", "-q", "origin", "main");
+        Git(_repoPath, "commit", "-am", "bump sub");
+        Git(_repoPath, "config", "submodule.sub.update", "none");
+
+        var outcome = _git.ResetWorktree(_repo, new WorktreeResetRequest(_worktree, "refs/heads/main", "second", UpdateSubmodules: true));
+
+        Assert.Equal(WorktreeResetOutcome.Ok, outcome);
+        Assert.Equal("later", File.ReadAllText(Path.Combine(_worktree, "sub", "sub.txt")));
+    }
+
+    [Fact]
+    public void PointsAKeptSubmoduleAtTheUrlItsSuperprojectNowGives()
+    {
+        var moved = Path.Combine(_root, "moved-sub");
+        Directory.Move(_subPath, moved);
+        Git(_repoPath, "config", "submodule.sub.url", moved);
+
+        var outcome = _git.ResetWorktree(_repo, new WorktreeResetRequest(_worktree, "HEAD", "second", UpdateSubmodules: true));
+
+        Assert.Equal(WorktreeResetOutcome.Ok, outcome);
+        Assert.Equal(moved, Git(Path.Combine(_worktree, "sub"), "remote", "get-url", "origin").Trim());
+    }
+
+    [Fact]
+    public void AHookFailingAfterTheCheckoutIsAWarningNotAFailure()
+    {
+        var hooks = Path.Combine(_repoPath, ".git", "hooks");
+        Directory.CreateDirectory(hooks);
+        File.WriteAllText(Path.Combine(hooks, "post-checkout"), "#!/bin/sh\nexit 1\n");
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(Path.Combine(hooks, "post-checkout"), UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+        var outcome = _git.ResetWorktree(_repo, new WorktreeResetRequest(_worktree, "HEAD", "second", UpdateSubmodules: true));
+
+        var reset = Assert.IsType<WorktreeResetOutcome.Reset>(outcome);
+        Assert.NotNull(reset.Warning);
+        Assert.Equal("second", Git(_worktree, "branch", "--show-current").Trim());
+    }
+
+    private static string GitDir(string tree)
+    {
+        var dir = Git(tree, "rev-parse", "--git-dir").Trim();
+        return Path.IsPathRooted(dir) ? dir : Path.GetFullPath(Path.Combine(tree, dir));
+    }
+
     private static string Git(string cwd, params string[] args) => TestGit.Run(cwd, args);
 }
