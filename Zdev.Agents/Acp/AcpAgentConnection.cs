@@ -11,6 +11,10 @@ namespace Zdev.Agents.Acp;
 public interface IAcpPermissionPrompt
 {
     Task<string?> AskAsync(AcpPermissionRequest request, CancellationToken ct);
+
+    /// <summary>The answers the user gave ahead of time, read again for each request before it is
+    /// put to them, so a change applies from the next one. Called on the connection's reader thread.</summary>
+    AcpApprovalRules Rules => AcpApprovalRules.AskingForEdits;
 }
 
 /// <summary>The app's MCP server as a session is handed it. A session opened without one gets no MCP
@@ -42,9 +46,9 @@ public abstract record AcpLoad
 
 /// <summary>
 /// One agent run over the Agent Client Protocol: the adapter process, its one session, and the
-/// write guard. Every permission request goes through <see cref="AcpPermissionPolicy"/> — reads,
-/// shell commands and the app's own MCP tools pass, file edits and the rest are asked — and the
-/// session is put in its harness's asking mode first, so that no write is decided inside the CLI.
+/// write guard. Every permission request goes through <see cref="AcpPermissionPolicy"/> with the
+/// prompt's <see cref="IAcpPermissionPrompt.Rules"/>, edits judged against the session's folder, and
+/// the session is put in its harness's asking mode first, so that no write is decided inside the CLI.
 /// Events are raised on the reader's thread.
 /// </summary>
 public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
@@ -74,6 +78,7 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     private readonly AgentProcessTree? _tree;
     private readonly IAcpPermissionPrompt _prompt;
     private readonly string? _ownServer;
+    private string? _workspace;
     private readonly Dictionary<string, string> _announcedServers = new();
     private readonly Queue<string> _stderr = new();
     private string? _sessionId;
@@ -316,6 +321,7 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     internal async Task<string?> OpenAsync(
         string workingDirectory, AcpMcpServer? server, string askingMode, string? sessionMetaJson, CancellationToken ct)
     {
+        _workspace = workingDirectory;
         _rpc.Start();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(HandshakeTimeout);
@@ -336,6 +342,7 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
     internal async Task<AcpLoad> OpenLoadingAsync(
         string workingDirectory, string sessionId, AcpMcpServer? server, string askingMode, string? sessionMetaJson, CancellationToken ct)
     {
+        _workspace = workingDirectory;
         _rpc.Start();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(HandshakeTimeout);
@@ -569,7 +576,7 @@ public sealed class AcpAgentConnection : IAsyncDisposable, IAcpClientMessages
         if (request is null) throw new AcpRpcException(AcpRpcException.InvalidParams, "Unreadable permission request.");
 
         string? chosen;
-        switch (AcpPermissionPolicy.Decide(request, _ownServer))
+        switch (AcpPermissionPolicy.Decide(request, _ownServer, _prompt.Rules, _workspace))
         {
             case AcpPermissionDecision.Select select:
                 PermissionDecided?.Invoke(request, select.Verdict);

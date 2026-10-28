@@ -222,6 +222,34 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task Prompt_AnEditInsideTheSessionFolder_IsAllowedByThePromptsRules_WithoutAsking()
+    {
+        _prompt.Rules = AcpApprovalRules.AskingForEdits with { AllowsWorkspaceEdits = true };
+        var folder = Path.Combine(Path.GetTempPath(), "repo");
+        Assert.Null(await _connection.OpenAsync(folder, Server, "default", null, CancellationToken.None).WaitAsync(Deadline));
+        JsonNode? inside = null, outside = null;
+        _prompt.Answer = "no";
+        _agent.OnPrompt = async agent =>
+        {
+            inside = await agent.RequestPermission("""
+                {"toolCall":{"toolCallId":"t1","title":"Write a.txt","kind":"edit","locations":[{"path":"a.txt"}]},
+                 "options":[{"optionId":"yes","name":"Yes","kind":"allow_once"},{"optionId":"no","name":"No","kind":"reject_once"}]}
+                """);
+            outside = await agent.RequestPermission("""
+                {"toolCall":{"toolCallId":"t2","title":"Write b.txt","kind":"edit","locations":[{"path":"../elsewhere/b.txt"}]},
+                 "options":[{"optionId":"yes","name":"Yes","kind":"allow_once"},{"optionId":"no","name":"No","kind":"reject_once"}]}
+                """);
+            return "end_turn";
+        };
+
+        await _connection.PromptAsync("go", CancellationToken.None).WaitAsync(Deadline);
+
+        Assert.Equal("yes", inside?["outcome"]?["optionId"]?.GetValue<string>());
+        Assert.Equal("no", outside?["outcome"]?["optionId"]?.GetValue<string>());
+        Assert.Equal(["Write b.txt"], _prompt.Asked);
+    }
+
+    [Fact]
     public async Task Prompt_CancelledTurn_ReportsCancelled()
     {
         Assert.Null(await _connection.OpenAsync("C:/repo", Server, "default", null, CancellationToken.None).WaitAsync(Deadline));
@@ -350,6 +378,7 @@ public sealed class AcpAgentConnectionTests : IAsyncDisposable
     {
         public List<string> Asked { get; } = new();
         public string? Answer { get; set; }
+        public AcpApprovalRules Rules { get; set; } = AcpApprovalRules.AskingForEdits;
 
         public Task<string?> AskAsync(AcpPermissionRequest request, CancellationToken ct)
         {

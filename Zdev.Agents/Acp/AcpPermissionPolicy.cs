@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 
 namespace Zdev.Agents.Acp;
 
@@ -72,41 +71,70 @@ public enum AcpPermissionVerdict
 }
 
 /// <summary>
-/// The write guard for an agent run over ACP: reads and shell commands are allowed — the agent runs
-/// the tests, formatters and generators itself — except a push, which is put to the user; file edits
-/// are put to the user too, and the app's own MCP tools are allowed each time they are asked about. The same rules for every harness, which
-/// is why the guard lives in the client rather than in each CLI's flags.
+/// The write guard for an agent run over ACP: reads are allowed, and shell commands, file edits and
+/// MCP tools as the user's <see cref="AcpApprovalRules"/> say; the app's own MCP tools are allowed
+/// each time they are asked about, and deletes, mode switches and the rest are put to the user. The
+/// same rules for every harness, which is why the guard lives in the client rather than in each
+/// CLI's flags.
 /// </summary>
-public static partial class AcpPermissionPolicy
+public static class AcpPermissionPolicy
 {
+    /// <summary>Decides with <see cref="AcpApprovalRules.AskingForEdits"/>: every edit put to the user.</summary>
     /// <param name="ownServer">The app's MCP server, whose tools are allowed; null when the session has none.</param>
-    public static AcpPermissionDecision Decide(AcpPermissionRequest request, string? ownServer)
+    public static AcpPermissionDecision Decide(AcpPermissionRequest request, string? ownServer) =>
+        Decide(request, ownServer, AcpApprovalRules.AskingForEdits, null);
+
+    /// <param name="ownServer">The app's MCP server, whose tools are allowed; null when the session has none.</param>
+    /// <param name="workspace">The session's folder, the edits inside which <paramref name="rules"/> may
+    /// allow; null when it allows none.</param>
+    public static AcpPermissionDecision Decide(AcpPermissionRequest request, string? ownServer, AcpApprovalRules rules, string? workspace)
     {
         // Once, every time, rather than always: Claude Code writes an "always" into the repository's
         // own .claude/settings.local.json, which is the user's file, not the session's.
         if (request.McpServer is null && request.IsMcpApproval) return new AcpPermissionDecision.AskUser();
-        if (request.McpServer is { } server && ownServer is not null && string.Equals(server, ownServer, StringComparison.OrdinalIgnoreCase))
+        if (request.McpServer is { } server
+            && (ownServer is not null && string.Equals(server, ownServer, StringComparison.OrdinalIgnoreCase) || rules.AllowsServer(server)))
             return AllowOnce(request);
 
         // Codex files another server's MCP tool calls as execute: only a shell command is the agent's own.
         return request.Kind switch
         {
             AcpToolKind.Execute when request.McpServer is not null => new AcpPermissionDecision.AskUser(),
-            AcpToolKind.Execute when Pushes(request.Command ?? request.Title) => new AcpPermissionDecision.AskUser(),
-            AcpToolKind.Read or AcpToolKind.Search or AcpToolKind.Think or AcpToolKind.Fetch or AcpToolKind.Execute =>
-                AllowOnce(request),
+            AcpToolKind.Execute => AllowsCommand(request.Command ?? request.Title, rules) ? AllowOnce(request) : new AcpPermissionDecision.AskUser(),
+            AcpToolKind.Read or AcpToolKind.Search or AcpToolKind.Think or AcpToolKind.Fetch => AllowOnce(request),
+            AcpToolKind.Edit or AcpToolKind.Move when EditsStayIn(request, rules, workspace) => AllowOnce(request),
             AcpToolKind.Edit or AcpToolKind.Delete or AcpToolKind.Move or AcpToolKind.SwitchMode or AcpToolKind.Other =>
                 new AcpPermissionDecision.AskUser(),
             _ => throw new ArgumentOutOfRangeException(nameof(request), request.Kind, "Unknown tool kind."),
         };
     }
 
+    /// <summary>Whether <paramref name="rules"/> let <paramref name="command"/> run without asking:
+    /// asking before wins over always allowing, and that over what other commands get.</summary>
+    public static bool AllowsCommand(string command, AcpApprovalRules rules)
+    {
+        if (rules.AskBefore.Any(entry => AcpCommandLine.Runs(command, entry))) return false;
+        if (AcpCommandLine.StartsEveryPart(command, rules.AlwaysAllow)) return true;
+        return rules.OtherCommands == AcpCommandFallback.Allow;
+    }
+
+    /// <summary>Whether every file <paramref name="request"/> names is inside <paramref name="workspace"/>
+    /// and protected by none of the rules' entries; never for a request that names none, which can't be told.</summary>
+    private static bool EditsStayIn(AcpPermissionRequest request, AcpApprovalRules rules, string? workspace)
+    {
+        if (!rules.AllowsWorkspaceEdits || workspace is null || request.Paths.Count == 0) return false;
+        foreach (var path in request.Paths)
+        {
+            if (AcpWorkspaceFiles.Inside(workspace, path) is not { } relative) return false;
+            if (rules.ProtectedFiles.Any(entry => AcpWorkspaceFiles.Matches(relative, entry))) return false;
+        }
+
+        return true;
+    }
+
     /// <summary>Whether a command line runs <c>git push</c> anywhere in it, global options between
     /// the two words included.</summary>
-    public static bool Pushes(string command) => GitPush().IsMatch(command);
-
-    [GeneratedRegex(@"(?<![\w-])git(?:\.exe)?(?:\s+(?:-C|-c|--git-dir|--work-tree)\s+\S+|\s+-\S+)*\s+push\b", RegexOptions.IgnoreCase)]
-    private static partial Regex GitPush();
+    public static bool Pushes(string command) => AcpCommandLine.Runs(command, "git push");
 
     private static AcpPermissionDecision AllowOnce(AcpPermissionRequest request)
     {
