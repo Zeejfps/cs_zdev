@@ -14,7 +14,7 @@ public sealed class GitConfigFile
     private GitConfigFile(Dictionary<string, List<string>> values) => _values = values;
 
     public static GitConfigFile ForRepo(string repoPath)
-        => Read(Path.Combine(CommonGitDir(RepoGitDir.Resolve(repoPath)), "config"));
+        => Read(Path.Combine(RepoGitDir.ResolveCommon(repoPath), "config"));
 
     public static GitConfigFile Read(string configPath)
     {
@@ -42,21 +42,6 @@ public sealed class GitConfigFile
             if (end > prefix.Length) found.Add(key[prefix.Length..end]);
         }
         return [.. found];
-    }
-
-    private static string CommonGitDir(string gitDir)
-    {
-        var pointer = Path.Combine(gitDir, "commondir");
-        if (!File.Exists(pointer)) return gitDir;
-        try
-        {
-            var target = File.ReadAllText(pointer).Trim();
-            return target.Length == 0 ? gitDir : Path.GetFullPath(target, gitDir);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-        {
-            return gitDir;
-        }
     }
 
     private static string Key(string section, string? subsection, string name)

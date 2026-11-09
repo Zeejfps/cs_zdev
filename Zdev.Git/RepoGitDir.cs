@@ -37,4 +37,22 @@ public static class RepoGitDir
         }
         return dotGit;
     }
+
+    // A linked worktree's git dir names the primary's in its `commondir` file; that is where config,
+    // objects and lfs/ live. Falls back to the worktree's own git dir, like Resolve does.
+    public static string ResolveCommon(string repoPath)
+    {
+        var gitDir = Resolve(repoPath);
+        var pointer = Path.Combine(gitDir, "commondir");
+        if (!File.Exists(pointer)) return gitDir;
+        try
+        {
+            var target = File.ReadAllText(pointer).Trim();
+            return target.Length == 0 ? gitDir : Path.GetFullPath(target, gitDir);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return gitDir;
+        }
+    }
 }

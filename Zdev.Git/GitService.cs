@@ -3442,9 +3442,37 @@ public sealed class GitService : IGitService, IGitRawConfigReader, IDisposable
         => Read<byte[]?>(repo, () =>
         {
             var (revPath, onDisk) = ResolveBlobSource(path, side, oldSide, commitSha, baseSha);
-            if (onDisk) return ReadWorkingFileBytes(repo.Path, path, maxBytes);
-            return revPath == null ? null : ShowBlobBytes(repo.Path, revPath, maxBytes);
+            var bytes = onDisk
+                ? ReadWorkingFileBytes(repo.Path, path, maxBytes)
+                : revPath == null ? null : ShowBlobBytes(repo.Path, revPath, maxBytes);
+            return bytes != null && LfsPointer.TryParse(bytes) is { } pointer
+                ? ReadLfsObject(repo.Path, pointer, onDisk ? null : revPath, maxBytes)
+                : bytes;
         }, null);
+
+    // The content an LFS pointer stands for: the local object store first, then — for a committed
+    // or staged blob — git's own smudge filter, which has git-lfs download it. A working-tree
+    // pointer has no rev to smudge, so it resolves only from what is already fetched.
+    private byte[]? ReadLfsObject(string workingDir, LfsPointer pointer, string? revPath, int maxBytes)
+    {
+        if (pointer.Size > maxBytes) return null;
+
+        var local = pointer.LocalObjectPath(RepoGitDir.ResolveCommon(workingDir));
+        try
+        {
+            if (File.Exists(local) && new FileInfo(local).Length == pointer.Size)
+                return File.ReadAllBytes(local);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
+
+        if (revPath == null) return null;
+        var result = _runner.RunBytes(workingDir, new[] { "cat-file", "--filters", revPath }, maxBytes);
+        return result.Started && result.ExitCode == 0 && !result.Truncated && LfsPointer.TryParse(result.Stdout) == null
+            ? result.Stdout
+            : null;
+    }
 
     // Where one side of a diff's content lives: a `git show` rev spec, or the working-tree file
     // on disk. RevPath is null when the side isn't addressable (a required sha is missing).
